@@ -29,6 +29,7 @@ module.exports = [
         plugins: [terser()],
       },
     ],
+    external: ['vue'],
     plugins: [resolve(), commonjs(), typescript({ module: "ESNext"})],
   }
 ]
