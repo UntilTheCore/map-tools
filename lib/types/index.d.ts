@@ -4,3 +4,4 @@ export * from './popupTool';
 export * from './pointTool';
 export * from './lineTool';
 export * from './polygonTool';
+export * from './hooks/useMap';
