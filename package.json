@@ -1,5 +1,5 @@
 {
-  "name": "map-tools",
+  "name": "@rainroad/map-tools",
   "version": "1.0.0",
   "license": "MIT",
   "main": "lib/index.cjs.js",
