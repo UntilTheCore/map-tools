@@ -1,4 +1,5 @@
 /// <reference path="../minemap.d.ts" />
+import { Ref } from "vue";
 import type { Feature, FeatureCollection } from "@turf/turf";
 export type EventDispatcherData = {
     layerId: string;
@@ -37,48 +38,7 @@ export type MapHookOption = {
  * @returns
  */
 export declare function useMap(option: MapHookOption): {
-    mapInstance: import("vue").Ref<{
-        on: (eventName: string, callback: (e: any) => void) => void;
-        off: (eventName: string, callback: (e: any) => void) => void;
-        remove: () => void;
-        addSource: (id: string, option: MapSource) => void;
-        getSource: (id: string) => any;
-        removeSource: (id: string) => void;
-        addLayer: (option: MapLayer) => void;
-        getLayer: (id: string) => any;
-        removeLayer: (id: string) => void;
-        moveLayer: (downLayerId: string, upLayerId?: string | undefined) => void;
-        getZoom: () => number;
-        setZoom: (zoom: number) => void;
-        zoomTo: (zoom: number, options?: {
-            duration: number;
-            easing: () => number;
-            offset: number[];
-            animate: boolean;
-        } | undefined, eventData?: any) => void;
-        getCenter: () => {
-            lng: number;
-            lat: number;
-        };
-        setFilter: (layerId: string, condition: (string | number)[] | null) => void;
-        setLayoutProperty: (layerId: string, name: string, value: any, options?: any) => void;
-        panTo: (coordinate: number[]) => void;
-        queryRenderedFeatures: (point: number[], options?: {
-            layers?: string[] | undefined;
-            filter?: any[] | undefined;
-            validate?: boolean | undefined;
-        } | undefined) => any[];
-        loadImage: (url: string, cb: (error: any, image: any) => void) => void;
-        getCanvas: () => any;
-        hasImage: (url: any) => boolean;
-        addImage: (name: string, image: any, option?: any) => void;
-        triggerRepaint: () => void;
-        fitBounds: (bound: any, option: any) => void;
-        easeTo: (param: {
-            center: number[];
-            zoom: number;
-        }) => void;
-    } | null | undefined>;
+    mapInstance: Ref<minemap.Map | null | undefined>;
     mapInitialize: (map: minemap.Map) => void;
     onMapLoaded: (fn: BindFn["onMapLoaded"]) => void;
     onClickLayerEventDispatcher: (fn: BindFn["clickLayerEventDispatcher"]) => void;

@@ -1,4 +1,4 @@
-import { onUnmounted, ref, reactive } from "vue";
+import { onUnmounted, ref, reactive, Ref } from "vue";
 import type { Feature, FeatureCollection } from "@turf/turf";
 
 export type EventDispatcherData = {
@@ -50,7 +50,7 @@ export function useMap(option: MapHookOption) {
         bindZoomLayers = [],
         zoomQueryBy = "mouse",
     } = option;
-    const mapInstance = ref<minemap.Map | null | undefined>(map);
+    const mapInstance: Ref<minemap.Map | null | undefined> = ref(map);
     const mouseInfo = reactive({
         lng: 0,
         lat: 0,
