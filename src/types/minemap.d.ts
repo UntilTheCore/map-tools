@@ -104,6 +104,7 @@ declare namespace minemap {
     getCenter(): { lng: number, lat: number };
     setFilter(layerId: string, condition: (string | number)[] | null): void;
     setLayoutProperty(layerId: string, name: string, value: any, options?: any): void;
+    getLayoutProperty(layerId: string, name: string): any;
 
     // 工具相关
     panTo(coordinate: number[]): void;

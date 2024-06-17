@@ -36,6 +36,10 @@ export function clearAllSourceAndLayer(map: minemap.Map, constant: any) {
   }
 }
 
+function addLayer(map: minemap.Map, layer: MapLayer) {
+  map.addLayer(layer)
+}
+
 /**
  * 设置图层和数据源，支持在数据源和图层设置完成后再执行一个回调函数
  * @param map
@@ -149,47 +153,6 @@ function addSource(map: minemap.Map, sourceId: string, featureCollection: Featur
     ...option
   })
 }
-
-function addLayer(map: minemap.Map, layer: MapLayer) {
-  map.addLayer(layer)
-}
-
-// 显示一个图层
-export function showLayer(map: minemap.Map, layerId: string) {
-  if (map && map.getLayer(layerId)) {
-    map.setLayoutProperty(layerId, 'visibility', 'visible')
-  }
-}
-
-// 隐藏一个图层
-export function hiddenLayer(map: minemap.Map, layerId: string) {
-  if (map && map.getLayer(layerId)) {
-    map.setLayoutProperty(layerId, 'visibility', 'none')
-  }
-}
-
-// 隐藏多个图层
-export function hiddenLayers(map: minemap.Map, layerIdList: string[]) {
-  if (Array.isArray(layerIdList) && layerIdList.length > 0) {
-    layerIdList.forEach(layerId => {
-      if (map.getLayer(layerId)) {
-        map.setLayoutProperty(layerId, 'visibility', 'none')
-      }
-    })
-  }
-}
-
-// 显示多个图层
-export function showLayers(map: minemap.Map, layerIdList: string[]) {
-  if (Array.isArray(layerIdList) && layerIdList.length > 0) {
-    layerIdList.forEach(layerId => {
-      if (map.getLayer(layerId)) {
-        map.setLayoutProperty(layerId, 'visibility', 'visible')
-      }
-    })
-  }
-}
-
 
 export function moveAndZoom(map: minemap.Map, coordinate: number[], zoom = 12) {
   map.easeTo({
