@@ -43,10 +43,6 @@ export declare function setPbfSourceData(map: minemap.Map, sourceId: string, lay
     useToken?: boolean;
     token?: string;
 }): void;
-export declare function showLayer(map: minemap.Map, layerId: string): void;
-export declare function hiddenLayer(map: minemap.Map, layerId: string): void;
-export declare function hiddenLayers(map: minemap.Map, layerIdList: string[]): void;
-export declare function showLayers(map: minemap.Map, layerIdList: string[]): void;
 export declare function moveAndZoom(map: minemap.Map, coordinate: number[], zoom?: number): void;
 export declare function moveMap(map: minemap.Map, coordinate: number[]): void;
 export declare function setZoom(map: minemap.Map, zoom: number): void;
