@@ -86,14 +86,14 @@ export function showLayers(map: minemap.Map, layerIdList: string[]) {
 
 /**
  * 切换图层的显示和隐藏。分受控和非受控模式，判定的条件是是否传入了getData方法。
- * 非受控模式下：内部只控制图层的显示和隐藏，不关心数据是否存在，若图层本身就不存在，则什么都不做。
+ * 非受控模式下：内部只控制图层的显示和隐藏，不关心数据是否存在，若图层本身就不存在，则什么都不做。因此，你可以只配置  map 和 layerId 属性。
  * 受控模式：内部通过 visible 属性和 getData 属性联合控制数据的获取和显隐操作。getData的执行以及图层的显隐受visible的控制。
  * 为了保证图层在 visible = true 时一定显示，getData 需要返回一个 Promise, 来确保数据加载完成后主动控制显隐操作。
  */
 export function toggleLayer(option: {
   map: minemap.Map;
   layerId: string;
-  sourceId: string;
+  sourceId?: string;
   visible?: boolean;
   getData?: (map: minemap.Map) => Promise<any>;
 }) {
@@ -140,6 +140,7 @@ export function toggleLayer(option: {
    */
   function controlled() {
     if(typeof getData === 'function') {
+      if(!sourceId) {console.warn('toggleLayer: missing sourceId'); return;}
       const layer = map.getLayer(layerId)
       const source = map.getSource(sourceId)
 
@@ -165,7 +166,7 @@ export function toggleLayer(option: {
     const layer = map.getLayer(layerId);
     if(layer) {
       const visibleStr: 'visible' | 'none' | undefined = map.getLayoutProperty(layerId, 'visibility');
-      if (visibleStr === 'visible') {
+      if (visibleStr === 'visible' || !visibleStr) {
         hideLayer(map, layerId)
       } else {
         showLayer(map, layerId)
