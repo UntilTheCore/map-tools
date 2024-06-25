@@ -32,12 +32,14 @@ export declare function setMultipleLayerSourceData(map: minemap.Map, sourceId: s
     sourceOption?: Omit<MapSource, 'type' | 'data'>;
 }): void;
 /**
- * 设置pbf数据源
+ * 设置pbf数据源，重复设置数据源时，会自动删除之前(sourceId)数据源
  * @param map
  * @param sourceId
  * @param layer
  * @param tiles
- * @param option
+ * @param {{useToken: boolean, token: string}} option
+ * @param [option.useToken] - 是否使用token, 使用 token时，会自动为tiles数组内的所有链接末尾添加token值。
+ * @param [option.token] - token值
  */
 export declare function setPbfSourceData(map: minemap.Map, sourceId: string, layer: MapLayer, tiles: string[], option?: {
     useToken?: boolean;
