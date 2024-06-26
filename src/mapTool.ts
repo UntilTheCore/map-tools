@@ -139,9 +139,7 @@ export function setPbfSourceData(map: minemap.Map, sourceId: string, layer: MapL
     addLayer(map, layer)
   } else {
     map.removeSource(sourceId);
-    setTimeout(() => {
-      addPbfSource(tiles)
-    }, 0);
+    addPbfSource(tiles)
   }
 }
 
