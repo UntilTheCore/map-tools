@@ -37,14 +37,8 @@ export declare function setMultipleLayerSourceData(map: minemap.Map, sourceId: s
  * @param sourceId
  * @param layer
  * @param tiles
- * @param {{useToken: boolean, token: string}} option
- * @param [option.useToken] - 是否使用token, 使用 token时，会自动为tiles数组内的所有链接末尾添加token值。
- * @param [option.token] - token值
  */
-export declare function setPbfSourceData(map: minemap.Map, sourceId: string, layer: MapLayer, tiles: string[], option?: {
-    useToken?: boolean;
-    token?: string;
-}): void;
+export declare function setPbfSourceData(map: minemap.Map, sourceId: string, layer: MapLayer, tiles: string[]): void;
 export declare function moveAndZoom(map: minemap.Map, coordinate: number[], zoom?: number): void;
 export declare function moveMap(map: minemap.Map, coordinate: number[]): void;
 export declare function setZoom(map: minemap.Map, zoom: number): void;
