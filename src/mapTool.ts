@@ -36,8 +36,16 @@ export function clearAllSourceAndLayer(map: minemap.Map, constant: any) {
   }
 }
 
+/**
+ * 
+ * @param map 添加layer，如果 layer id 已存在，则什么都不做。
+ * @param layer 
+ */
 function addLayer(map: minemap.Map, layer: MapLayer) {
-  map.addLayer(layer)
+  const isLayer = map.getLayer(layer.id);
+  if(!isLayer) {
+    map.addLayer(layer)
+  }
 }
 
 /**
@@ -115,26 +123,13 @@ export function setMultipleLayerSourceData(map: minemap.Map, sourceId: string, l
  * @param sourceId
  * @param layer
  * @param tiles
- * @param {{useToken: boolean, token: string}} option
- * @param [option.useToken] - 是否使用token, 使用 token时，会自动为tiles数组内的所有链接末尾添加token值。
- * @param [option.token] - token值
  */
-export function setPbfSourceData(map: minemap.Map, sourceId: string, layer: MapLayer, tiles: string[], option: {
-  useToken?: boolean;
-  token?: string;
-} = {}) {
+export function setPbfSourceData(map: minemap.Map, sourceId: string, layer: MapLayer, tiles: string[]) {
 
   function addPbfSource(tiles: string[]) {
     map.addSource(sourceId, {
       type: 'vector',
       tiles
-    })
-  }
-
-  const { useToken = false, token } = option
-  if (useToken) {
-    tiles = tiles.map(tile => {
-      return tile + token
     })
   }
 
@@ -146,7 +141,7 @@ export function setPbfSourceData(map: minemap.Map, sourceId: string, layer: MapL
     map.removeSource(sourceId);
     setTimeout(() => {
       addPbfSource(tiles)
-    }, 50);
+    }, 0);
   }
 }
 
