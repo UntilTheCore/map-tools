@@ -57,7 +57,7 @@ export declare function getCenterBetweenRightPointIntersection(coordinates: numb
  */
 export declare function checkCoordinate(coordinate: any): void;
 export declare function setViewPortByPolygon(map: minemap.Map, polygon: Feature<MultiPolygon | Polygon, Properties>, boundary: ViewPortOption['boundary']): void;
-declare enum FeatureTypeEnum {
+export declare enum FeatureTypeEnum {
     Point = "Point",
     LineString = "LineString",
     MultiLineString = "MultiLineString",
@@ -76,4 +76,3 @@ export type ViewPortOption = {
  * @param [option.boundary] - 计算出的边界与整个浏览器视口的距离。数据逻辑为[上,右,下,左]
  */
 export declare function setViewPort(map: minemap.Map, overlays?: Feature<Point | LineString | MultiLineString | Polygon | MultiPolygon>[], option?: ViewPortOption): void;
-export {};
