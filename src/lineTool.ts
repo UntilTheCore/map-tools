@@ -5,8 +5,11 @@ import {
   featureCollection,
   geomEach,
   getCoords,
-  lineString
+  lineString,
+  getType,
+
 } from '@turf/turf'
+import { FeatureTypeEnum } from './mapTool'
 
 /**
  * 获取线的端点,支持 lineString 和 multiLineString
@@ -38,9 +41,17 @@ export function getLineStringEndpoint(lineFeatureCollection: FeatureCollection<L
   if (!lineFeatureCollection) return []
   const endPoints: any[] = []
   geomEach(lineFeatureCollection, (currentGeometry) => {
+    const type = getType(currentGeometry);
     const coords = getCoords(currentGeometry)
-    endPoints.push(coords[0])
-    endPoints.push(coords[coords.length - 1])
+    if(type === FeatureTypeEnum.LineString) {
+      endPoints.push(coords[0])
+      endPoints.push(coords[coords.length - 1])
+    } else if(type === FeatureTypeEnum.MultiLineString) {
+      coords.forEach(coordItem => {
+        endPoints.push(coordItem[0])
+        endPoints.push(coordItem[coordItem.length - 1])
+      })
+    }
   })
   return endPoints
 }

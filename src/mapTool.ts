@@ -256,7 +256,7 @@ export function setViewPortByPolygon(map: minemap.Map, polygon: Feature<MultiPol
   }
 }
 
-enum FeatureTypeEnum {
+export enum FeatureTypeEnum {
   Point = 'Point',
   LineString = 'LineString',
   MultiLineString = 'MultiLineString',
