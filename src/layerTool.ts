@@ -185,7 +185,7 @@ export function toggleLayer(option: {
 export function getPbfGeometry(map: minemap.Map, pbfLayerId: string) {
   const features = map.queryRenderedFeatures({layers: [pbfLayerId]});
   if(features && features.length > 0) {
-    return features.map(item => feature(item.geometry));
+    return features.map(item => feature(item.geometry, item.properties));
   }
   return [];
 }
