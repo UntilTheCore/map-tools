@@ -76,3 +76,7 @@ export type ViewPortOption = {
  * @param [option.boundary] - 计算出的边界与整个浏览器视口的距离。数据逻辑为[上,右,下,左]
  */
 export declare function setViewPort(map: minemap.Map, overlays?: Feature<Point | LineString | MultiLineString | Polygon | MultiPolygon>[], option?: ViewPortOption): void;
+/**
+ * 设置pbf图层视图
+ */
+export declare function setPbfLayerViewport(map: minemap.Map, pbfLayerId: string): void;

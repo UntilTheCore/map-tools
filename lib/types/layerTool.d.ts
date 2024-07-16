@@ -47,3 +47,7 @@ export declare function toggleLayer(option: {
     visible?: boolean;
     getData?: (map: minemap.Map) => Promise<any>;
 }): void;
+/**
+ * 获取pbf图层的geometry数据
+ */
+export declare function getPbfGeometry(map: minemap.Map, pbfLayerId: string): import("@turf/turf").Feature<import("geojson").Geometry, import("@turf/turf").Properties>[];
