@@ -109,11 +109,17 @@ declare namespace minemap {
     // 工具相关
     panTo(coordinate: number[]): void;
 
-    queryRenderedFeatures(point: number[], options?: {
+    queryRenderedFeatures(point?: number[], options?: {
       layers?: string[],
       filter?: any[],
       validate?: boolean,
-    }): any[];
+    }): GeoJSON.Feature[];
+
+    queryRenderedFeatures(options?: {
+      layers?: string[],
+      filter?: any[],
+      validate?: boolean,
+    }): GeoJSON.Feature[];
 
     // 资源相关
     loadImage(url: string, cb: (error: any, image: any) => void): void;

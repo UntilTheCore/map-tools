@@ -1,15 +1,27 @@
 import {
-  bbox, bearing, centerOfMass, envelope,
-  Feature, featureCollection,
-  FeatureCollection, getCoord,
-  getType, lineIntersect, lineString, LineString,
+  bbox,
+  bearing,
+  centerOfMass,
+  envelope,
+  Feature,
+  featureCollection,
+  FeatureCollection,
+  getCoord,
+  getType,
+  lineIntersect,
+  lineString,
+  LineString,
   MultiLineString,
-  MultiPolygon, point,
-  Point, polygon,
+  MultiPolygon,
+  point,
+  Point,
+  polygon,
   Polygon,
-  Properties
+  Properties,
+  feature,
+  Geometry,
 } from '@turf/turf'
-import { pointListToCoordList } from '@/pointTool';
+import { getPbfGeometry, pointListToCoordList } from '@/pointTool';
 import { getLineStringEndpoint } from '@/lineTool'
 import { getPolygonVertex } from '@/polygonTool'
 
@@ -309,3 +321,12 @@ export function setViewPort(
     }
   }
 }
+
+/**
+ * 设置pbf图层视图
+ */
+export function setPbfLayerViewport(map: minemap.Map, pbfLayerId: string) {
+  const _feature: Feature<any>[] = getPbfGeometry(map, pbfLayerId);
+  setViewPort(map, _feature);
+}
+

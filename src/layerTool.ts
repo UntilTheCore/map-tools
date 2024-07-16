@@ -1,3 +1,4 @@
+import { feature } from "@turf/turf";
 /**
  * 设置 source 的 id 名
  * @param prefix - 前缀
@@ -175,4 +176,16 @@ export function toggleLayer(option: {
   }
 
   getData ? controlled() : uncontrolled();
+}
+
+
+/**
+ * 获取pbf图层的geometry数据
+ */
+export function getPbfGeometry(map: minemap.Map, pbfLayerId: string) {
+  const features = map.queryRenderedFeatures({layers: [pbfLayerId]});
+  if(features && features.length > 0) {
+    return features.map(item => feature(item.geometry));
+  }
+  return [];
 }
