@@ -50,6 +50,6 @@ export declare function toggleLayer(option: {
 /**
  * 获取pbf图层的geometry数据
  */
-export declare function getPbfGeometry(map: minemap.Map, pbfLayerId: string): import("@turf/turf").Feature<import("geojson").Geometry, {
+export declare function getPbfFeatureList(map: minemap.Map, pbfLayerId: string): import("@turf/turf").Feature<import("geojson").Geometry, {
     [name: string]: any;
 } | null>[];

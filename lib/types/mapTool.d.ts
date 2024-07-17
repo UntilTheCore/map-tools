@@ -1,5 +1,5 @@
 /// <reference path="minemap.d.ts" />
-import { Feature, FeatureCollection, LineString, MultiLineString, MultiPolygon, Point, Polygon, Properties } from '@turf/turf';
+import { Feature, FeatureCollection, LineString, MultiLineString, MultiPolygon, Point, Polygon, Properties } from "@turf/turf";
 export declare function destroyMap(map: minemap.Map): void;
 export declare function clearAllSourceAndLayer(map: minemap.Map, constant: any): void;
 /**
@@ -29,7 +29,7 @@ export declare function setSourceData(map: minemap.Map, sourceId: string, layer:
 export declare function setMultipleLayerSourceData(map: minemap.Map, sourceId: string, layers: MapLayer[], featureCollection: FeatureCollection, option?: {
     afterSetData?: (map: minemap.Map, layerId: string) => void;
     afterSetLayer?: (map: minemap.Map, layerId: string) => void;
-    sourceOption?: Omit<MapSource, 'type' | 'data'>;
+    sourceOption?: Omit<MapSource, "type" | "data">;
 }): void;
 /**
  * 设置pbf数据源，重复设置数据源时，会自动删除之前(sourceId)数据源
@@ -56,7 +56,7 @@ export declare function getCenterBetweenRightPointIntersection(coordinates: numb
  * 检测坐标值是否符合 [xxx,xxx]格式
  */
 export declare function checkCoordinate(coordinate: any): void;
-export declare function setViewPortByPolygon(map: minemap.Map, polygon: Feature<MultiPolygon | Polygon, Properties>, boundary: ViewPortOption['boundary']): void;
+export declare function setViewPortByPolygon(map: minemap.Map, polygon: Feature<MultiPolygon | Polygon, Properties>, boundary: ViewPortOption["boundary"]): void;
 export declare enum FeatureTypeEnum {
     Point = "Point",
     LineString = "LineString",
@@ -77,6 +77,30 @@ export type ViewPortOption = {
  */
 export declare function setViewPort(map: minemap.Map, overlays?: Feature<Point | LineString | MultiLineString | Polygon | MultiPolygon>[], option?: ViewPortOption): void;
 /**
- * 设置pbf图层视图
+ * 设置PBF图层的视口。
+ *
+ * 此函数用于根据提供的数据配置地图的视口，特别是针对PBF格式的图层。它可以根据条件自动调整地图的缩放级别，
+ * 并确保所需的图层和源已加载。如果指定了自定义的缩放函数，则会使用该函数来设置地图的缩放级别；
+ * 否则，将使用默认的缩放级别。
+ *
+ * 调整缩放的原因是更好地抓取到pbf数据，因为地图是通过当前视口来返回数据，因此超过当前视口的瓦片数据不会被返回。
+ * 可以根据自身功能需求来调整缩放级别。
+ *
+ * @param {Object} data 函数的配置对象，包含以下属性：
+ * @param {minemap.Map} data.map 地图对象，用于设置视口。
+ * @param {string} data.layerId 需要设置视口的图层ID。
+ * @param {string} data.sourceId 图层对应的源ID。
+ * @param {number} [data.limit=30] 内部调用了 checkSourceLoaded 方法，参照其limit说明。
+ * @param {boolean} [data.autoZoom=true] 是否自动调整地图缩放级别，直接控制 zoom 和 zoomFn 是否生效。
+ * @param {Function} [data.zoomFn] 自定义的缩放级别设置函数，替代默认的缩放行为，优先级高于 zoom。
+ * @param {number} [data.zoom=10] 如果自动调整缩放级别，使用的默认缩放级别。
  */
-export declare function setPbfLayerViewport(map: minemap.Map, pbfLayerId: string): void;
+export declare function setPbfLayerViewport(data: {
+    map: minemap.Map;
+    layerId: string;
+    sourceId: string;
+    limit?: number;
+    autoZoom?: boolean;
+    zoom?: number;
+    zoomFn?: () => void;
+}): void;
