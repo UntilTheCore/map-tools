@@ -105,6 +105,11 @@ declare namespace minemap {
     setFilter(layerId: string, condition: (string | number)[] | null): void;
     setLayoutProperty(layerId: string, name: string, value: any, options?: any): void;
     getLayoutProperty(layerId: string, name: string): any;
+    /**
+     * 检查数据源是否加载完成
+     * @param sourceId 数据源 id
+     */
+    isSourceLoaded(sourceId: string): boolean;
 
     // 工具相关
     panTo(coordinate: number[]): void;
@@ -119,6 +124,12 @@ declare namespace minemap {
       layers?: string[],
       filter?: any[],
       validate?: boolean,
+    }): GeoJSON.Feature[];
+
+    querySourceFeatures(sourceId: String, options?: {
+      sourceLayer: string;
+      filter: any[];
+      validate: boolean;
     }): GeoJSON.Feature[];
 
     // 资源相关

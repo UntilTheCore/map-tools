@@ -182,7 +182,7 @@ export function toggleLayer(option: {
 /**
  * 获取pbf图层的geometry数据
  */
-export function getPbfGeometry(map: minemap.Map, pbfLayerId: string) {
+export function getPbfFeatureList(map: minemap.Map, pbfLayerId: string) {
   const features = map.queryRenderedFeatures({layers: [pbfLayerId]});
   if(features && features.length > 0) {
     return features.map(item => feature(item.geometry, item.properties));
