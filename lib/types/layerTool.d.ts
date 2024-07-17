@@ -48,8 +48,18 @@ export declare function toggleLayer(option: {
     getData?: (map: minemap.Map) => Promise<any>;
 }): void;
 /**
- * 获取pbf图层的geometry数据
+ * 获取pbf图层的feature列表数据的同步方法，但能否获取到数据要看地图中是否含有该图层数据。
+ * 它还有一个异步方法：getPbfFeatureListAsync
  */
-export declare function getPbfFeatureList(map: minemap.Map, pbfLayerId: string): import("@turf/turf").Feature<import("geojson").Geometry, {
+export declare function getPbfFeatureListSync(map: minemap.Map, pbfLayerId: string): import("@turf/turf").Feature<import("geojson").Geometry, {
     [name: string]: any;
 } | null>[];
+/**
+ * 获取pbf图层的feature列表数据的异步方法，不保证一定能获取到数据。此方法会根据根据 limit 值来触发等待获取数据的最大等待时间，单位是秒(s)，超时后会返回空数组。
+ * 它还有一个同步方法：getPbfFeatureListSync
+ */
+export declare function getPbfFeatureListAsync(map: minemap.Map, layerId: string, sourceId: string, option?: {
+    limit: number;
+}): Promise<import("@turf/turf").Feature<import("geojson").Geometry, {
+    [name: string]: any;
+} | null>[]>;
