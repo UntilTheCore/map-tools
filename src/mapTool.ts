@@ -23,7 +23,7 @@ import {
 } from "@turf/turf";
 import {
     checkSourceLoaded,
-    getPbfFeatureList,
+    getPbfFeatureListSync,
     pointListToCoordList,
     getLineStringEndpoint,
     getPolygonVertex,
@@ -463,7 +463,7 @@ export function setPbfLayerViewport(data: {
         limit,
     }).then((status) => {
         if (status) {
-            const _feature: Feature<any>[] = getPbfFeatureList(map, layerId);
+            const _feature: Feature<any>[] = getPbfFeatureListSync(map, layerId);
             setViewPort(map, _feature);
         }
     });
