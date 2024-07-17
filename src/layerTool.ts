@@ -190,26 +190,29 @@ export function getPbfFeatureListSync(map: minemap.Map, pbfLayerId: string) {
 }
 
 /**
- * 获取pbf图层的feature列表数据的异步方法，不保证一定能获取到数据。此方法会根据根据 limit 值来触发等待获取数据的最大等待时间，单位是秒(s)，超时后会返回空数组。
+ * 获取pbf图层的feature列表数据的异步方法，不保证一定能获取到数据。此方法会根据根据 limit 值(默认30)来触发等待获取数据的最大等待时间，单位是秒(s)，超时后会返回空数组。
  * 它还有一个同步方法：getPbfFeatureListSync
  */
 export async function getPbfFeatureListAsync(
-    map: minemap.Map,
-    layerId: string,
-    sourceId: string,
-    option?: { limit: number }
+  map: minemap.Map,
+  layerId: string,
+  sourceId: string,
+  option?: { limit: number }
 ) {
-    return checkSourceLoaded({
-        map,
-        sourceId,
-        limit: option?.limit,
-    }).then((status) => {
-        const features = map.queryRenderedFeatures({ layers: [layerId] });
-        if (features && features.length > 0) {
-            return features.map((item) =>
-                feature(item.geometry, item.properties)
-            );
-        }
-        return [];
-    });
+  return checkSourceLoaded({
+    map,
+    sourceId,
+    limit: option?.limit,
+  }).then((status) => {
+    if (status) {
+      const features = map.queryRenderedFeatures({ layers: [layerId] });
+      if (features && features.length > 0) {
+        return features.map((item) =>
+          feature(item.geometry, item.properties)
+        );
+      }
+    }
+
+    return [];
+  });
 }
