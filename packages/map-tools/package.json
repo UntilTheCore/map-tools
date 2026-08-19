@@ -1,0 +1,81 @@
+{
+  "name": "@ym/map-tools",
+  "version": "2.0.1",
+  "author": "ly",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "unpkg": "dist/umd/index.umd.js",
+  "jsdelivr": "dist/umd/index.umd.js",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./vue2": {
+      "types": "./dist/types/vue2/index.d.ts",
+      "import": "./dist/vue2.js",
+      "require": "./dist/vue2.cjs"
+    },
+    "./vue3": {
+      "types": "./dist/types/vue3/index.d.ts",
+      "import": "./dist/vue3.js",
+      "require": "./dist/vue3.cjs"
+    },
+    "./react": {
+      "types": "./dist/types/react/index.d.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    },
+    "./umd": "./dist/umd/index.umd.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@turf/turf": "^6.5.0",
+    "@types/geojson": "^7946.0.16",
+    "vue-demi": "^0.14.10"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0",
+    "vue": ">=2.7.0"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "registry": "http://192.168.3.180:4873/",
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build && vite build --config vite.umd.config.ts",
+    "typecheck": "tsc --noEmit",
+    "publish:pkg": "pnpm publish --registry http://192.168.3.180:4873 --no-git-checks",
+    "prepublishOnly": "pnpm build"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "typescript": "^5.9.2",
+    "vite": "^8.2.1",
+    "vite-plugin-dts": "^4.0.0",
+    "vue": "^3.5.0"
+  }
+}

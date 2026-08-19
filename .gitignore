@@ -1,3 +1,13 @@
 node_modules
 *.idea
-*.lock
+dist
+.vitepress/dist
+.vitepress/cache
+node_modules/.vite
+*.local
+
+# docs-preview 构建产物（精确到子包路径，勿用过宽的 **/public 规则以免误伤需跟踪的静态资源）
+packages/docs-preview/.vitepress/cache
+packages/docs-preview/.vitepress/dist
+packages/docs-preview/public/demos
+packages/docs-preview/examples/public/vendor

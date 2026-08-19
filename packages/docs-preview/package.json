@@ -1,0 +1,29 @@
+{
+  "name": "docs-preview",
+  "version": "1.0.0",
+  "private": true,
+  "description": "@ym/map-tools 文档站与示例中心（VitePress + 四框架交互式预览）",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p examples/tsconfig.json",
+    "build:demos": "node scripts/copy-umd.mjs && vite build --config examples/vite.demos.config.ts && vite build --config examples/vite.demos.vue2.config.ts",
+    "dev": "pnpm run build:demos && vitepress dev --port 5173",
+    "build": "pnpm run build:demos && vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.2",
+    "vite": "^8.2.1",
+    "vitepress": "^1.6.3",
+    "vue": "^3.5.0",
+    "vue-demi": "^0.14.10",
+    "vue2": "npm:vue@2.7.16"
+  },
+  "dependencies": {
+    "@ym/map-tools": "workspace:*"
+  }
+}
