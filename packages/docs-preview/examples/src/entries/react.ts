@@ -16,8 +16,7 @@ const token = resolveToken() ?? undefined;
 createToolbar(document.getElementById("toolbar")!, meta, "React");
 
 const modules = import.meta.glob<{ default: ExampleRender }>("../react/*.tsx");
-const loader =
-  modules[`../react/${exId}.tsx`] ?? modules[`../react/${DEFAULT_EXAMPLE}.tsx`];
+const loader = modules[`../react/${exId}.tsx`] ?? modules[`../react/${DEFAULT_EXAMPLE}.tsx`];
 
 const container = document.getElementById("app")!;
 let dispose: (() => void) | null = null;

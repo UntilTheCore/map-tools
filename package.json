@@ -6,6 +6,26 @@
     "build": "pnpm --filter @ym/map-tools build",
     "build:all": "pnpm build && pnpm --filter docs-preview build",
     "dev:docs": "pnpm --filter docs-preview dev",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": [
+      "oxlint --fix",
+      "prettier --write"
+    ],
+    "*.{vue,css,html,md,json,jsonc,yaml,yml}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.4.1",
+    "oxlint": "^1.80.0",
+    "prettier": "^3.9.6"
   }
 }

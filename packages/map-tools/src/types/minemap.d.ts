@@ -78,9 +78,7 @@ declare global {
       getLayoutProperty(layerId: string, name: string): unknown;
       setFilter(layerId: string, condition: readonly unknown[] | null): this;
       isSourceLoaded(sourceId: string): boolean;
-      queryRenderedFeatures(
-        options?: QueryRenderedFeaturesOptions,
-      ): RenderedFeature[];
+      queryRenderedFeatures(options?: QueryRenderedFeaturesOptions): RenderedFeature[];
       queryRenderedFeatures(
         point?: Coordinate | PointLike,
         options?: QueryRenderedFeaturesOptions,
@@ -89,10 +87,7 @@ declare global {
         sourceId: string,
         options?: QueryRenderedFeaturesOptions,
       ): RenderedFeature[];
-      loadImage(
-        url: string,
-        callback: (error: unknown, image: unknown) => void,
-      ): void;
+      loadImage(url: string, callback: (error: unknown, image: unknown) => void): void;
       getCanvas(): HTMLCanvasElement;
       hasImage(name: string): boolean;
       addImage(name: string, image: unknown, options?: unknown): void;

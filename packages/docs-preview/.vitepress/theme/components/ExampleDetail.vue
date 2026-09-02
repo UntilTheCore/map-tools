@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import {
-  registry,
-  exampleOrder,
-  DEFAULT_EXAMPLE,
-} from "../../../examples/src/registry";
+import { registry, exampleOrder, DEFAULT_EXAMPLE } from "../../../examples/src/registry";
 
 /**
  * 示例详情：左侧示例列表 + 右侧详情（变体 Tab / iframe 预览 / 源码面板）。
@@ -25,10 +21,10 @@ const variants = [
 
 type VariantId = (typeof variants)[number]["id"];
 
-const rawModules = import.meta.glob(
-  "../../../examples/src/*/*.{ts,tsx}",
-  { query: "?raw", import: "default" }
-);
+const rawModules = import.meta.glob("../../../examples/src/*/*.{ts,tsx}", {
+  query: "?raw",
+  import: "default",
+});
 
 const examples = exampleOrder.map((id) => ({ id, ...registry[id] }));
 
@@ -42,14 +38,10 @@ const tokenSavedTip = ref("");
 let tipTimer: ReturnType<typeof setTimeout> | undefined;
 
 const meta = computed(() => registry[activeId.value] ?? registry[DEFAULT_EXAMPLE]);
-const variantFile = computed(
-  () => variants.find((v) => v.id === activeVariant.value)!
-);
+const variantFile = computed(() => variants.find((v) => v.id === activeVariant.value)!);
 
 // token 不写入 iframe URL（避免进历史/日志），iframe 内与主页面同源共享 localStorage
-const iframeSrc = computed(
-  () => `/demos/${variantFile.value.entry}.html?ex=${activeId.value}`
-);
+const iframeSrc = computed(() => `/demos/${variantFile.value.entry}.html?ex=${activeId.value}`);
 
 function readToken() {
   try {
@@ -79,7 +71,7 @@ async function loadSource() {
 function setToken() {
   const input = window.prompt(
     "请输入 minemap token（写入 localStorage.MINEMAP_TOKEN）：",
-    token.value
+    token.value,
   );
   if (input !== null && input.trim()) {
     token.value = input.trim();
@@ -147,9 +139,7 @@ onMounted(() => {
           <code v-if="token">{{ token.slice(0, 6) }}…{{ token.slice(-4) }}</code>
           <code v-else>未配置</code>
         </span>
-        <button type="button" class="example-detail__btn" @click="setToken">
-          设置 token
-        </button>
+        <button type="button" class="example-detail__btn" @click="setToken">设置 token</button>
         <span v-if="tokenSavedTip" class="example-detail__tip">{{ tokenSavedTip }}</span>
       </span>
     </div>

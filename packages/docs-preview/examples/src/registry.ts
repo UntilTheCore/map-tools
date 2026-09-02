@@ -3,18 +3,17 @@
  * 四个框架的实现在 src/{vue3,vue2,react,html}/{id}.{ts,tsx}，
  * 统一导出 render(container, options) => 清理函数。
  */
-export type ExampleMeta = {
+export interface ExampleMeta {
   title: string;
   description: string;
   /** 涉及的 API 关键词，用于列表展示 */
   apis: string[];
-};
+}
 
 export const registry: Record<string, ExampleMeta> = {
   init: {
     title: "底图初始化与销毁",
-    description:
-      "使用 minemap SDK 创建地图实例，演示 destroyMap 销毁与重新初始化。",
+    description: "使用 minemap SDK 创建地图实例，演示 destroyMap 销毁与重新初始化。",
     apis: ["destroyMap"],
   },
   "layer-visibility": {
@@ -44,37 +43,23 @@ export const registry: Record<string, ExampleMeta> = {
     title: "视野与缩放控制",
     description:
       "演示 easeTo / panTo / setZoom，以及 fitToFeatures / fitToGeometry 的显式视野控制。",
-    apis: [
-      "easeTo",
-      "panTo",
-      "setZoom",
-      "fitToFeatures",
-      "fitToGeometry",
-    ],
+    apis: ["easeTo", "panTo", "setZoom", "fitToFeatures", "fitToGeometry"],
   },
   "marker-clean": {
     title: "Marker 清理管理",
-    description:
-      "批量创建 Marker 与 Popup，演示 removeOverlays 的统一生命周期清理。",
+    description: "批量创建 Marker 与 Popup，演示 removeOverlays 的统一生命周期清理。",
     apis: ["removeOverlays"],
   },
   popup: {
     title: "Popup 弹窗",
-    description:
-      "使用 createPopupDom 创建可释放的弹窗内容句柄，结合 minemap.Popup 展示并清理。",
+    description: "使用 createPopupDom 创建可释放的弹窗内容句柄，结合 minemap.Popup 展示并清理。",
     apis: ["createPopupDom", "PopupDomHandle"],
   },
   "use-map-events": {
     title: "useMap 事件监听",
     description:
       "通过 useMap 的 setMap / on / off / unbindAll 监听图层点击、移动与缩放事件；HTML 版使用原生事件。",
-    apis: [
-      "useMap",
-      "setMap",
-      "on",
-      "off",
-      "unbindAll",
-    ],
+    apis: ["useMap", "setMap", "on", "off", "unbindAll"],
   },
   "geo-tools": {
     title: "坐标与几何工具",

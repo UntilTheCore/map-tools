@@ -19,13 +19,7 @@ export interface Padding {
   left: number;
 }
 
-export type SupportedGeometry =
-  | Point
-  | LineString
-  | MultiLineString
-  | Polygon
-  | MultiPolygon;
+export type SupportedGeometry = Point | LineString | MultiLineString | Polygon | MultiPolygon;
 
 export type SupportedFeature = Feature<SupportedGeometry, GeoJsonProperties>;
 export type GeometryFeature<G extends Geometry = Geometry> = Feature<G, GeoJsonProperties>;
-

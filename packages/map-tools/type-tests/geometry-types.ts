@@ -12,7 +12,7 @@ const coordinate: Coordinate = [116.4, 39.9];
 const padding: Padding = { top: 8, right: 8, bottom: 8, left: 8 };
 assertCoordinate(coordinate);
 if (isCoordinate(coordinate)) {
-  coordinate[0];
+  void coordinate[0];
 }
 
 getLineEndpoints({
@@ -21,7 +21,13 @@ getLineEndpoints({
     {
       type: "Feature",
       properties: null,
-      geometry: { type: "LineString", coordinates: [[116, 39], [117, 40]] },
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [116, 39],
+          [117, 40],
+        ],
+      },
     },
   ],
 });
@@ -33,7 +39,14 @@ getPolygonVertices({
       properties: null,
       geometry: {
         type: "Polygon",
-        coordinates: [[[116, 39], [117, 39], [117, 40], [116, 39]]],
+        coordinates: [
+          [
+            [116, 39],
+            [117, 39],
+            [117, 40],
+            [116, 39],
+          ],
+        ],
       },
     },
   ],

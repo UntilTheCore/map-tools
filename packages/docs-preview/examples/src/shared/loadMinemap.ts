@@ -10,12 +10,9 @@
  */
 import type {} from "@ym/map-tools/minemap";
 
-export const MINEMAP_CDN_MAIN =
-  "https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js";
-export const MINEMAP_CDN_FALLBACK =
-  "https://minedata.cn/minemapapi/v3.0.0/minemap.js";
-export const MINEMAP_CSS =
-  "https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.css";
+export const MINEMAP_CDN_MAIN = "https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js";
+export const MINEMAP_CDN_FALLBACK = "https://minedata.cn/minemapapi/v3.0.0/minemap.js";
+export const MINEMAP_CSS = "https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.css";
 
 export const TOKEN_STORAGE_KEY = "MINEMAP_TOKEN";
 
@@ -49,9 +46,7 @@ let loadingPromise: Promise<typeof minemap> | null = null;
 
 function injectScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(
-      `script[data-minemap-src="${src}"]`
-    );
+    const existing = document.querySelector<HTMLScriptElement>(`script[data-minemap-src="${src}"]`);
     if (existing) {
       resolve();
       return;
@@ -59,19 +54,17 @@ function injectScript(src: string): Promise<void> {
     const script = document.createElement("script");
     script.src = src;
     script.dataset.minemapSrc = src;
-    script.onload = () => resolve();
-    script.onerror = () => {
+    script.addEventListener("load", () => resolve());
+    script.addEventListener("error", () => {
       script.remove();
       reject(new Error(`minemap 脚本加载失败: ${src}`));
-    };
+    });
     document.head.appendChild(script);
   });
 }
 
 function injectCss(href: string) {
-  const existing = document.querySelector<HTMLLinkElement>(
-    `link[data-minemap-css="${href}"]`
-  );
+  const existing = document.querySelector<HTMLLinkElement>(`link[data-minemap-css="${href}"]`);
   if (existing) return;
   const link = document.createElement("link");
   link.rel = "stylesheet";
@@ -100,11 +93,11 @@ export function loadMinemap(): Promise<typeof minemap> {
           return window.minemap;
         });
       })
-      .catch((err: unknown) => {
+      .catch((error: unknown) => {
         loadingPromise = null;
         throw new Error(
           `minemap SDK 加载失败（${MINEMAP_CDN_MAIN} / ${MINEMAP_CDN_FALLBACK}），请检查网络。` +
-            (err instanceof Error ? ` ${err.message}` : ` ${String(err)}`)
+            (error instanceof Error ? ` ${error.message}` : ` ${String(error)}`),
         );
       });
   }
@@ -124,7 +117,7 @@ export function setupMinemapGlobals(token: string): typeof minemap {
   m.spriteUrl = "https://minemap.minedata.cn/minemapapi/v3.0.0/sprite/sprite";
   m.serviceUrl = "https://service.minedata.cn/service";
   m.key = token;
-  m.solution = 11003;
+  m.solution = 11_003;
   return m;
 }
 
@@ -139,7 +132,7 @@ export function createMinemapMap(
     (m) =>
       new Promise<minemap.Map>((resolve, reject) => {
         setupMinemapGlobals(token);
-        const containerId = "minemap-" + Math.random().toString(36).slice(2);
+        const containerId = `minemap-${Math.random().toString(36).slice(2)}`;
         const host = document.createElement("div");
         host.id = containerId;
         host.style.cssText = "width:100%;height:100%;position:relative;";
@@ -160,15 +153,15 @@ export function createMinemapMap(
             doubleClickZoom: true,
             ...extra,
           });
-        } catch (e: unknown) {
-          reject(new Error("minemap.Map 创建失败: " + getErrorMessage(e)));
+        } catch (error: unknown) {
+          reject(new Error("minemap.Map 创建失败: " + getErrorMessage(error)));
           return;
         }
         try {
           onCreated?.(map);
         } catch (error: unknown) {
           map.remove();
-          reject(new Error("minemap.Map 初始化回调失败: " + getErrorMessage(error)));
+          reject(new Error(`minemap.Map 初始化回调失败: ${getErrorMessage(error)}`));
           return;
         }
         let settled = false;
@@ -182,14 +175,13 @@ export function createMinemapMap(
           settled = true;
           reject(
             new Error(
-              "底图加载失败（token 无效或无权限）: " +
-                (e.error ? String(e.error) : String(e))
-            )
+              `底图加载失败（token 无效或无权限）: ${e.error ? String(e.error) : String(e)}`,
+            ),
           );
         };
         map.on("load", onLoad);
         map.on("error", onError);
-      })
+      }),
   );
 }
 

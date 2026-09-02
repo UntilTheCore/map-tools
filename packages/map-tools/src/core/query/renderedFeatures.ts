@@ -1,4 +1,9 @@
-import type { MapLike, QueryPoint, QueryRenderedFeaturesOptions, RenderedFeature } from "../../types/map";
+import type {
+  MapLike,
+  QueryPoint,
+  QueryRenderedFeaturesOptions,
+  RenderedFeature,
+} from "../../types/map";
 import { invalidArgument, sdkError } from "../errors";
 
 export function queryRenderedFeatures(

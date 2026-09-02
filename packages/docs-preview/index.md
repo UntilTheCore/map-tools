@@ -42,12 +42,7 @@ features:
 ## 一分钟上手
 
 ```ts
-import {
-  createLayerId,
-  createSourceId,
-  ensureLayers,
-  upsertGeoJSONSource,
-} from "@ym/map-tools";
+import { createLayerId, createSourceId, ensureLayers, upsertGeoJSONSource } from "@ym/map-tools";
 
 const sourceId = createSourceId("demo", "district");
 const layerId = createLayerId("demo", "district");

@@ -68,9 +68,7 @@ export default defineConfig({
 
     outline: { level: [2, 3], label: "本页目录" },
 
-    socialLinks: [
-      { icon: "github", link: "https://github.com" },
-    ],
+    socialLinks: [{ icon: "github", link: "https://github.com" }],
 
     footer: {
       message: "基于 minemap SDK（元图科技 Minedata）",

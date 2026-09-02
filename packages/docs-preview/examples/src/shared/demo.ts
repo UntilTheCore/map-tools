@@ -4,12 +4,11 @@
  */
 import { resolveToken, saveToken, TOKEN_STORAGE_KEY } from "./loadMinemap";
 
-export type RenderOptions = { token?: string };
+export interface RenderOptions {
+  token?: string;
+}
 
-export type ExampleRender = (
-  container: HTMLElement,
-  options: RenderOptions
-) => () => void;
+export type ExampleRender = (container: HTMLElement, options: RenderOptions) => () => void;
 
 export function styleHost(container: HTMLElement) {
   container.style.cssText =
@@ -37,11 +36,7 @@ export function createControlBar(container: HTMLElement): HTMLElement {
   return bar;
 }
 
-export function addButton(
-  bar: HTMLElement,
-  label: string,
-  onClick: () => void
-): HTMLButtonElement {
+export function addButton(bar: HTMLElement, label: string, onClick: () => void): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "demo-btn";
@@ -135,8 +130,7 @@ export function renderNoTokenPanel(container: HTMLElement, title: string) {
   const p = document.createElement("div");
   p.textContent =
     "配置 token 后可见真实地图效果。请通过示例 URL 追加 ?token=xxx 或点击下方按钮设置。";
-  p.style.cssText =
-    "max-width:520px;font-size:13px;line-height:1.7;color:#9fc7b4;";
+  p.style.cssText = "max-width:520px;font-size:13px;line-height:1.7;color:#9fc7b4;";
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "demo-btn";
@@ -145,7 +139,7 @@ export function renderNoTokenPanel(container: HTMLElement, title: string) {
     const current = resolveToken();
     const input = window.prompt(
       "请输入 minemap token（将写入 localStorage 的 MINEMAP_TOKEN）：",
-      current ?? ""
+      current ?? "",
     );
     if (input !== null && input.trim()) {
       saveToken(input.trim());
@@ -153,10 +147,8 @@ export function renderNoTokenPanel(container: HTMLElement, title: string) {
     }
   });
   const hint = document.createElement("div");
-  hint.textContent =
-    "读取顺序：URL ?token= 参数 → localStorage." + TOKEN_STORAGE_KEY;
-  hint.style.cssText =
-    "font-size:11px;color:#5e8c77;font-family:ui-monospace,Consolas,monospace;";
+  hint.textContent = `读取顺序：URL ?token= 参数 → localStorage.${TOKEN_STORAGE_KEY}`;
+  hint.style.cssText = "font-size:11px;color:#5e8c77;font-family:ui-monospace,Consolas,monospace;";
   panel.append(badge, h, p, btn, hint);
   container.appendChild(panel);
   return () => {
@@ -165,11 +157,7 @@ export function renderNoTokenPanel(container: HTMLElement, title: string) {
 }
 
 /** 渲染错误面板（SDK 加载失败 / 地图初始化失败） */
-export function renderErrorPanel(
-  container: HTMLElement,
-  message: string,
-  retry?: () => void
-) {
+export function renderErrorPanel(container: HTMLElement, message: string, retry?: () => void) {
   styleHost(container);
   const panel = document.createElement("div");
   panel.style.cssText = [

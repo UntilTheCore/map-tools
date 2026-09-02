@@ -1,0 +1,53 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "style": "warn"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true
+  },
+  "globals": {
+    "minemap": "readonly",
+    "FE_utils": "readonly"
+  },
+  "ignorePatterns": [
+    "**/node_modules",
+    "**/dist",
+    "**/.vitepress/cache",
+    "**/.vitepress/dist",
+    "packages/docs-preview/public",
+    "packages/docs-preview/examples/public",
+    ".husky"
+  ],
+  "rules": {
+    "unicorn/require-module-specifiers": "off",
+    "typescript/no-useless-empty-export": "off",
+    "typescript/triple-slash-reference": "off",
+    "typescript/no-extraneous-class": "off",
+    "typescript/consistent-type-imports": "off",
+    "typescript/method-signature-style": "off",
+    "eslint/no-unused-expressions": ["error", { "allowShortCircuit": true, "allowTernary": true }],
+    "eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "eslint/no-underscore-dangle": ["error", { "allow": ["__dirname", "__filename"] }],
+    "eslint/no-magic-numbers": "off",
+    "eslint/one-var": ["warn", "never"],
+    "eslint/sort-keys": "off",
+    "eslint/sort-imports": "off",
+    "eslint/curly": "off",
+    "eslint/func-style": "off",
+    "eslint/max-statements": "off",
+    "eslint/no-ternary": "off",
+    "eslint/id-length": "off",
+    "eslint/capitalized-comments": "off",
+    "eslint/no-continue": "off",
+    "eslint/arrow-body-style": "off",
+    "eslint/max-params": "off",
+    "unicorn/filename-case": "off",
+    "unicorn/prefer-global-this": "off",
+    "unicorn/prefer-export-from": "off"
+  }
+}

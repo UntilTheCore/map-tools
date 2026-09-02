@@ -1,10 +1,5 @@
 import type { MapLayerBindings, MapLike } from "../../types/public";
-import type {
-  MapEventMap,
-  MapMouseEvent,
-  MapZoomEvent,
-  UseMapEventMap,
-} from "../../types/events";
+import type { MapEventMap, MapMouseEvent, MapZoomEvent, UseMapEventMap } from "../../types/events";
 import type { QueryPoint, RenderedFeature } from "../../types/map";
 import { queryRenderedFeatures } from "../query/renderedFeatures";
 

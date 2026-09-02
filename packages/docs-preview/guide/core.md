@@ -28,11 +28,13 @@ upsertGeoJSONSource(map, {
   id: "district-source",
   data: geojson,
 });
-ensureLayers(map, [{
-  id: "district-fill",
-  type: "fill",
-  source: "district-source",
-}]);
+ensureLayers(map, [
+  {
+    id: "district-fill",
+    type: "fill",
+    source: "district-source",
+  },
+]);
 
 setLayerVisibility(map, "district-fill", true);
 ```

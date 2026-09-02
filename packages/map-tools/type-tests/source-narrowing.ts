@@ -9,11 +9,11 @@ export {};
 
 declare const source: MapSource;
 if (source.type === "geojson") {
-  source.data;
+  void source.data;
 }
 if (source.type === "vector") {
-  source.tiles;
-  source.data;
+  void source.tiles;
+  void source.data;
 }
 
 declare const geojsonInstance: GeoJSONSourceInstance;

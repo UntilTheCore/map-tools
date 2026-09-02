@@ -40,7 +40,7 @@ export function isGeoJSONSource(
 ): source is GeoJSONSourceInstance {
   return Boolean(
     source &&
-      "setData" in source &&
-      typeof (source as { setData?: unknown }).setData === "function",
+    "setData" in source &&
+    typeof (source as { setData?: unknown }).setData === "function",
   );
 }

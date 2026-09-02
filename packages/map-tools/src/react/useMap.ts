@@ -4,12 +4,7 @@ import {
   createMapEventController,
   type MapEventController,
 } from "../core/events/mapEventController";
-import type {
-  MapLike,
-  UseMapEventMap,
-  UseMapOptions,
-  UseMapReturn,
-} from "../types/public";
+import type { MapLike, UseMapEventMap, UseMapOptions, UseMapReturn } from "../types/public";
 
 export type { MapLike } from "../types/public";
 
@@ -31,8 +26,7 @@ export type {
   UseMapReturn,
 } from "../types/public";
 
-export interface ReactUseMapReturn
-  extends UseMapReturn<MutableRefObject<MapLike | null>> {
+export interface ReactUseMapReturn extends UseMapReturn<MutableRefObject<MapLike | null>> {
   mapRef: MutableRefObject<MapLike | null>;
   setMap(map: MapLike | null): void;
   on<K extends keyof UseMapEventMap>(
@@ -75,11 +69,14 @@ export function useMap(options: UseMapOptions = {}): ReactUseMapReturn {
     };
   }, [controller, options.mapLifecycle]);
 
-  const setMap = useCallback((map: MapLike | null) => {
-    if (mapRef.current === map) return;
-    mapRef.current = map;
-    controller.setMap(map);
-  }, [controller]);
+  const setMap = useCallback(
+    (map: MapLike | null) => {
+      if (mapRef.current === map) return;
+      mapRef.current = map;
+      controller.setMap(map);
+    },
+    [controller],
+  );
 
   return {
     mapRef,

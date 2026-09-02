@@ -86,15 +86,14 @@ export interface CameraMap {
   getCenter(): LngLatLike;
 }
 
-export interface MapLike extends
-  EventedMap,
-  RemovableMap,
-  SourceMap,
-  LayerMap,
-  SourceLoadMap,
-  RenderedFeatureQueryMap,
-  CameraMap {}
+export interface MapLike
+  extends
+    EventedMap,
+    RemovableMap,
+    SourceMap,
+    LayerMap,
+    SourceLoadMap,
+    RenderedFeatureQueryMap,
+    CameraMap {}
 
-export type MapEventListener<K extends keyof MapEventMap> = (
-  event: MapEventMap[K],
-) => void;
+export type MapEventListener<K extends keyof MapEventMap> = (event: MapEventMap[K]) => void;

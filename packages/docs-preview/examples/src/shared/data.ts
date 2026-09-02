@@ -1,10 +1,4 @@
-import type {
-  Feature,
-  FeatureCollection,
-  LineString,
-  Point,
-  Polygon,
-} from "geojson";
+import type { Feature, FeatureCollection, LineString, Point, Polygon } from "geojson";
 import type { Coordinate } from "@ym/map-tools";
 
 /** 示例共享 GeoJSON 数据（北京城区周边），四框架变体复用。 */

@@ -19,7 +19,7 @@ const dest = resolve(destDir, "fe-utils.umd.js");
 if (!existsSync(src)) {
   console.error(
     `[copy-umd] 未找到 UMD 产物: ${src}\n` +
-      `请先在 packages/map-tools 下执行 pnpm build 生成 dist/umd/index.umd.js`
+      `请先在 packages/map-tools 下执行 pnpm build 生成 dist/umd/index.umd.js`,
   );
   process.exit(1);
 }
@@ -27,7 +27,5 @@ if (!existsSync(src)) {
 mkdirSync(destDir, { recursive: true });
 copyFileSync(src, dest);
 
-const size = statSync(dest).size;
-console.log(
-  `[copy-umd] OK: ${src} -> ${dest} (${(size / 1024).toFixed(1)} KB)`
-);
+const { size } = statSync(dest);
+console.log(`[copy-umd] OK: ${src} -> ${dest} (${(size / 1024).toFixed(1)} KB)`);

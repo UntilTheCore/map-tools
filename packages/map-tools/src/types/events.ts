@@ -21,9 +21,16 @@ export interface MapMouseEvent extends MapEvent {
   lngLat: LngLat;
   point: PointLike;
 }
-export interface MapZoomEvent extends MapEvent { type: "zoomend" }
-export interface MapLoadEvent extends MapEvent { type: "load" }
-export interface MapErrorEvent extends MapEvent { type: "error"; error?: unknown }
+export interface MapZoomEvent extends MapEvent {
+  type: "zoomend";
+}
+export interface MapLoadEvent extends MapEvent {
+  type: "load";
+}
+export interface MapErrorEvent extends MapEvent {
+  type: "error";
+  error?: unknown;
+}
 
 export interface MapEventMap {
   load: MapLoadEvent;
@@ -82,9 +89,7 @@ export interface UseMapOptions {
   mapLifecycle?: "external" | "owned";
 }
 
-export type FrameworkMapRef =
-  | { value: MapLike | null }
-  | { current: MapLike | null };
+export type FrameworkMapRef = { value: MapLike | null } | { current: MapLike | null };
 
 export interface UseMapReturn<R extends FrameworkMapRef = FrameworkMapRef> {
   mapRef: R;

@@ -1,9 +1,6 @@
 import { createApp, h } from "vue-demi";
 import type { Component } from "vue-demi";
-import {
-  createPopupDom as createCorePopupDom,
-  type PopupDomHandle,
-} from "../core/popup/dom";
+import { createPopupDom as createCorePopupDom, type PopupDomHandle } from "../core/popup/dom";
 
 export function createPopupDom(
   component: Component,

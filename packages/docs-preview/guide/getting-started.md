@@ -30,12 +30,7 @@ SDK 加载前 `window.minemap` 是可选值。TypeScript 项目通过显式类�
 ## 第一个 GeoJSON 图层
 
 ```ts
-import {
-  createLayerId,
-  createSourceId,
-  ensureLayers,
-  upsertGeoJSONSource,
-} from "@ym/map-tools";
+import { createLayerId, createSourceId, ensureLayers, upsertGeoJSONSource } from "@ym/map-tools";
 
 const sourceId = createSourceId("demo", "district");
 const layerId = createLayerId("demo", "district");
@@ -55,12 +50,14 @@ map.on("load", () => {
       features: [],
     },
   });
-  ensureLayers(map, [{
-    id: layerId,
-    type: "fill",
-    source: sourceId,
-    paint: { "fill-color": "#4de08b", "fill-opacity": 0.35 },
-  }]);
+  ensureLayers(map, [
+    {
+      id: layerId,
+      type: "fill",
+      source: sourceId,
+      paint: { "fill-color": "#4de08b", "fill-opacity": 0.35 },
+    },
+  ]);
 });
 ```
 

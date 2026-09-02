@@ -1,21 +1,12 @@
 import { fileURLToPath, URL } from "node:url";
-import {
-  existsSync,
-  readdirSync,
-  readFileSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
 function writePublicTypeEntry(file: string, reference: string): void {
   const target = fileURLToPath(new URL(`./dist/types/${file}`, import.meta.url));
-  writeFileSync(
-    target,
-    `/// <reference path="${reference}" />\n\nexport {};\n`,
-  );
+  writeFileSync(target, `/// <reference path="${reference}" />\n\nexport {};\n`);
 }
 
 function getDeclarationFiles(directory: string): string[] {
@@ -26,14 +17,8 @@ function getDeclarationFiles(directory: string): string[] {
   });
 }
 
-function toNodeNextSpecifier(
-  declarationFile: string,
-  specifier: string,
-): string {
-  if (
-    !specifier.startsWith(".") ||
-    /\.(?:[cm]?[jt]sx?|json|d\.ts)$/u.test(specifier)
-  ) {
+function toNodeNextSpecifier(declarationFile: string, specifier: string): string {
+  if (!specifier.startsWith(".") || /\.(?:[cm]?[jt]sx?|json|d\.ts)$/u.test(specifier)) {
     return specifier;
   }
 
@@ -51,16 +36,12 @@ function toNodeNextSpecifier(
  * consumed through NodeNext. Keep the declaration graph NodeNext-compatible.
  */
 function rewriteDeclarationSpecifiersForNodeNext(): void {
-  const typesDirectory = fileURLToPath(
-    new URL("./dist/types/", import.meta.url),
-  );
+  const typesDirectory = fileURLToPath(new URL("dist/types/", import.meta.url));
   for (const declarationFile of getDeclarationFiles(typesDirectory)) {
     const source = readFileSync(declarationFile, "utf8");
     const rewritten = source
-      .replace(
-        /\bfrom\s+(["'])(\.{1,2}\/[^'"]*?)\1/gu,
-        (match, quote: string, specifier: string) =>
-          match.replace(specifier, toNodeNextSpecifier(declarationFile, specifier)),
+      .replace(/\bfrom\s+(["'])(\.{1,2}\/[^'"]*?)\1/gu, (match, quote: string, specifier: string) =>
+        match.replace(specifier, toNodeNextSpecifier(declarationFile, specifier)),
       )
       .replace(
         /\bimport\(\s*(["'])(\.{1,2}\/[^'"]*?)\1\s*\)/gu,
@@ -102,8 +83,7 @@ export default defineConfig({
         events: "src/events.ts",
       },
       formats: ["es", "cjs"],
-      fileName: (format, entryName) =>
-        format === "es" ? `${entryName}.js` : `${entryName}.cjs`,
+      fileName: (format, entryName) => (format === "es" ? `${entryName}.js` : `${entryName}.cjs`),
     },
     rollupOptions: {
       external,
@@ -113,7 +93,7 @@ export default defineConfig({
     dts({
       entryRoot: "src",
       outDir: "dist/types",
-      tsconfigPath: fileURLToPath(new URL("./tsconfig.json", import.meta.url)),
+      tsconfigPath: fileURLToPath(new URL("tsconfig.json", import.meta.url)),
       include: ["src"],
       copyDtsFiles: true,
       afterBuild: () => {

@@ -11,9 +11,9 @@ const result: VueUseMapReturn = useMap({
 });
 
 const unsubscribe = result.on("click:layer", (payload) => {
-  payload.features;
-  payload.layerIds;
-  payload.event.point;
+  void payload.features;
+  void payload.layerIds;
+  void payload.event.point;
 });
 result.off("click:layer", () => {});
 unsubscribe();

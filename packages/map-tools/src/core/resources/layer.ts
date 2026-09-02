@@ -3,10 +3,7 @@ import type { MapLike } from "../../types/map";
 import type { MapSource } from "../../types/source";
 import { invalidArgument, sdkError } from "../errors";
 
-export function ensureLayer(
-  map: Pick<MapLike, "getLayer" | "addLayer">,
-  layer: MapLayer,
-): boolean {
+export function ensureLayer(map: Pick<MapLike, "getLayer" | "addLayer">, layer: MapLayer): boolean {
   if (!map) invalidArgument("map is required");
   if (!layer || !layer.id) invalidArgument("layer.id is required");
   if (!layer.type) invalidArgument(`layer.type is required: ${layer.id}`);

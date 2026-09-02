@@ -16,8 +16,7 @@ const token = resolveToken() ?? undefined;
 createToolbar(document.getElementById("toolbar")!, meta, "Vue 3");
 
 const modules = import.meta.glob<{ default: ExampleRender }>("../vue3/*.ts");
-const loader =
-  modules[`../vue3/${exId}.ts`] ?? modules[`../vue3/${DEFAULT_EXAMPLE}.ts`];
+const loader = modules[`../vue3/${exId}.ts`] ?? modules[`../vue3/${DEFAULT_EXAMPLE}.ts`];
 
 const container = document.getElementById("app")!;
 let dispose: (() => void) | null = null;

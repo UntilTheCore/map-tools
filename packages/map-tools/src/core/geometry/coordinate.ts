@@ -14,4 +14,3 @@ export function assertCoordinate(value: unknown): asserts value is Coordinate {
     invalidArgument("coordinate must be [longitude, latitude] with finite numbers");
   }
 }
-

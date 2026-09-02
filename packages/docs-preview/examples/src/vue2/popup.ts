@@ -26,28 +26,29 @@ const PopupContent = Vue.extend({
   },
   render(h) {
     const lngLat = this.lngLat as { lng: number; lat: number };
-    return h("div", {
-      style: {
-        padding: "8px 12px",
-        minWidth: "180px",
-        background: "#0d1a15",
-        border: "1px solid rgba(77,224,139,.5)",
-        borderRadius: "8px",
-        color: "#eafff5",
-        fontSize: "12px",
+    return h(
+      "div",
+      {
+        style: {
+          padding: "8px 12px",
+          minWidth: "180px",
+          background: "#0d1a15",
+          border: "1px solid rgba(77,224,139,.5)",
+          borderRadius: "8px",
+          color: "#eafff5",
+          fontSize: "12px",
+        },
       },
-    }, [
-      h("strong", { style: { color: "#4de08b" } }, "Vue 2 Popup"),
-      h("div", { style: { marginTop: "4px" } }, `经度: ${lngLat.lng.toFixed(4)}`),
-      h("div", { style: { marginTop: "2px" } }, `纬度: ${lngLat.lat.toFixed(4)}`),
-    ]);
+      [
+        h("strong", { style: { color: "#4de08b" } }, "Vue 2 Popup"),
+        h("div", { style: { marginTop: "4px" } }, `经度: ${lngLat.lng.toFixed(4)}`),
+        h("div", { style: { marginTop: "2px" } }, `纬度: ${lngLat.lat.toFixed(4)}`),
+      ],
+    );
   },
 });
 
-export default function render(
-  container: HTMLElement,
-  options: RenderOptions,
-): () => void {
+export default function render(container: HTMLElement, options: RenderOptions): () => void {
   styleHost(container);
   if (!options.token) {
     const clean = renderNoTokenPanel(container, "Popup 弹窗");
@@ -63,7 +64,7 @@ export default function render(
   const sourceId = createSourceId("demo", "popupPoints");
   const layerId = createLayerId("demo", "popupPoints");
   const popups: minemap.Popup[] = [];
-  const handles: Array<ReturnType<typeof createPopupDom>> = [];
+  const handles: ReturnType<typeof createPopupDom>[] = [];
   let map: minemap.Map | null = null;
   let disposed = false;
 
@@ -86,12 +87,14 @@ export default function render(
       }
       map = currentMap;
       upsertGeoJSONSource(currentMap, { id: sourceId, data: markerPoints });
-      ensureLayers(currentMap, [{
-        id: layerId,
-        type: "circle",
-        source: sourceId,
-        paint: { "circle-radius": 7, "circle-color": "#4dc3e0" },
-      }]);
+      ensureLayers(currentMap, [
+        {
+          id: layerId,
+          type: "circle",
+          source: sourceId,
+          paint: { "circle-radius": 7, "circle-color": "#4dc3e0" },
+        },
+      ]);
       status.info("点击地图创建 Vue 2 Popup");
     })
     .catch((error: unknown) => {

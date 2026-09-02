@@ -21,14 +21,10 @@ const container = document.getElementById("app")!;
 let dispose: (() => void) | null = null;
 
 if (typeof (window as any).FE_utils === "undefined") {
-  renderErrorPanel(
-    container,
-    "window.FE_utils 未定义：UMD 脚本 vendor/fe-utils.umd.js 加载失败。"
-  );
+  renderErrorPanel(container, "window.FE_utils 未定义：UMD 脚本 vendor/fe-utils.umd.js 加载失败。");
 } else {
   const modules = import.meta.glob<{ default: ExampleRender }>("../html/*.ts");
-  const loader =
-    modules[`../html/${exId}.ts`] ?? modules[`../html/${DEFAULT_EXAMPLE}.ts`];
+  const loader = modules[`../html/${exId}.ts`] ?? modules[`../html/${DEFAULT_EXAMPLE}.ts`];
   loader().then((mod) => {
     dispose = mod.default(container, { token });
   });

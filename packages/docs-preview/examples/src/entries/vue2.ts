@@ -17,8 +17,7 @@ const token = resolveToken() ?? undefined;
 createToolbar(document.getElementById("toolbar")!, meta, "Vue 2.7");
 
 const modules = import.meta.glob<{ default: ExampleRender }>("../vue2/*.ts");
-const loader =
-  modules[`../vue2/${exId}.ts`] ?? modules[`../vue2/${DEFAULT_EXAMPLE}.ts`];
+const loader = modules[`../vue2/${exId}.ts`] ?? modules[`../vue2/${DEFAULT_EXAMPLE}.ts`];
 
 const container = document.getElementById("app")!;
 let dispose: (() => void) | null = null;

@@ -14,18 +14,30 @@ import { renderNoTokenPanel, styleHost, type RenderOptions } from "../shared/dem
 import { errorMessage } from "../shared/v3";
 
 function PopupContent({ lng, lat }: { lng: number; lat: number }) {
-  return <div style={{ padding: "8px 12px", minWidth: 180, background: "#0d1a15", border: "1px solid rgba(77,224,139,.5)", borderRadius: 8, color: "#eafff5", fontSize: 12 }}>
-    <strong style={{ color: "#4de08b" }}>React Popup</strong>
-    <div style={{ marginTop: 4 }}>经度: {lng.toFixed(4)}</div>
-    <div style={{ marginTop: 2 }}>纬度: {lat.toFixed(4)}</div>
-  </div>;
+  return (
+    <div
+      style={{
+        padding: "8px 12px",
+        minWidth: 180,
+        background: "#0d1a15",
+        border: "1px solid rgba(77,224,139,.5)",
+        borderRadius: 8,
+        color: "#eafff5",
+        fontSize: 12,
+      }}
+    >
+      <strong style={{ color: "#4de08b" }}>React Popup</strong>
+      <div style={{ marginTop: 4 }}>经度: {lng.toFixed(4)}</div>
+      <div style={{ marginTop: 2 }}>纬度: {lat.toFixed(4)}</div>
+    </div>
+  );
 }
 
 function Demo({ token }: { token: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<minemap.Map | null>(null);
   const popupsRef = useRef<minemap.Popup[]>([]);
-  const handlesRef = useRef<Array<ReturnType<typeof createPopupDom>>>([]);
+  const handlesRef = useRef<ReturnType<typeof createPopupDom>[]>([]);
   const [status, setStatus] = useState("地图初始化中");
   const [count, setCount] = useState(0);
 
@@ -35,7 +47,9 @@ function Demo({ token }: { token: string }) {
     const layerId = createLayerId("demo", "popupPoints");
     createMinemapMap(hostRef.current!, token, {}, (map) => {
       map.on("click", (event) => {
-        const handle = createPopupDom(<PopupContent lng={event.lngLat.lng} lat={event.lngLat.lat} />);
+        const handle = createPopupDom(
+          <PopupContent lng={event.lngLat.lng} lat={event.lngLat.lat} />,
+        );
         const popup = new minemap.Popup({ closeOnClick: false, closeButton: true })
           .setLngLat([event.lngLat.lng, event.lngLat.lat])
           .setDOMContent(handle.element)
@@ -53,7 +67,14 @@ function Demo({ token }: { token: string }) {
         }
         mapRef.current = map;
         upsertGeoJSONSource(map, { id: sourceId, data: markerPoints });
-        ensureLayers(map, [{ id: layerId, type: "circle", source: sourceId, paint: { "circle-radius": 7, "circle-color": "#4dc3e0" } }]);
+        ensureLayers(map, [
+          {
+            id: layerId,
+            type: "circle",
+            source: sourceId,
+            paint: { "circle-radius": 7, "circle-color": "#4dc3e0" },
+          },
+        ]);
         setStatus("点击地图创建 React Popup");
       })
       .catch((error: unknown) => setStatus(errorMessage(error)));
@@ -73,13 +94,22 @@ function Demo({ token }: { token: string }) {
     setStatus(`已清理 ${removed} 个 Popup`);
   };
 
-  return <div style={{ position: "relative", width: "100%", height: "100%" }}>
-    <div ref={hostRef} className="demo-map-host" style={{ position: "absolute", inset: 0 }} />
-    <div style={{ position: "absolute", top: 12, left: 12, zIndex: 30 }}>
-      <button type="button" className="demo-btn" onClick={clear}>清理 Popup ({count})</button>
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <div ref={hostRef} className="demo-map-host" style={{ position: "absolute", inset: 0 }} />
+      <div style={{ position: "absolute", top: 12, left: 12, zIndex: 30 }}>
+        <button type="button" className="demo-btn" onClick={clear}>
+          清理 Popup ({count})
+        </button>
+      </div>
+      <div
+        className="demo-status"
+        style={{ position: "absolute", left: 12, bottom: 12, zIndex: 30 }}
+      >
+        {status}
+      </div>
     </div>
-    <div className="demo-status" style={{ position: "absolute", left: 12, bottom: 12, zIndex: 30 }}>{status}</div>
-  </div>;
+  );
 }
 
 export default function render(container: HTMLElement, options: RenderOptions): () => void {

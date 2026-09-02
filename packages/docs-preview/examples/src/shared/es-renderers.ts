@@ -1,9 +1,4 @@
-import type {
-  Feature,
-  FeatureCollection,
-  Geometry,
-  Point,
-} from "geojson";
+import type { Feature, FeatureCollection, Geometry, Point } from "geojson";
 import {
   assertCoordinate,
   createLayerId,
@@ -45,14 +40,7 @@ import {
   type ExampleRender,
 } from "./demo";
 import { createMinemapMap } from "./loadMinemap";
-import {
-  districtA,
-  districtB,
-  geoDemo,
-  markerPoints,
-  routeLine,
-  viewportOverlays,
-} from "./data";
+import { districtA, districtB, geoDemo, markerPoints, routeLine, viewportOverlays } from "./data";
 import { asCoordinate, asFeatureCollection, errorMessage, featureName } from "./v3";
 
 function readyMapMessage(status: ReturnType<typeof createStatusBar>): void {
@@ -205,16 +193,12 @@ export const renderLayerVisibility: ExampleRender = (container, options) => {
     status.info(`已添加 ${layerIdA}、${layerIdB}、${layerIdPoints}`);
     addButton(bar, "隐藏 A", () => setLayerVisibility(map, layerIdA, false));
     addButton(bar, "显示 A", () => setLayerVisibility(map, layerIdA, true));
-    addButton(bar, "隐藏全部", () => setLayersVisibility(
-      map,
-      [layerIdA, layerIdB, layerIdPoints],
-      false,
-    ));
-    addButton(bar, "显示全部", () => setLayersVisibility(
-      map,
-      [layerIdA, layerIdB, layerIdPoints],
-      true,
-    ));
+    addButton(bar, "隐藏全部", () =>
+      setLayersVisibility(map, [layerIdA, layerIdB, layerIdPoints], false),
+    );
+    addButton(bar, "显示全部", () =>
+      setLayersVisibility(map, [layerIdA, layerIdB, layerIdPoints], true),
+    );
     addButton(bar, "切换 B", () => {
       const next = getLayerVisibility(map, layerIdB) !== "visible";
       setLayerVisibility(map, layerIdB, next);
@@ -270,7 +254,7 @@ export const renderPbfLayer: ExampleRender = (container, options) => {
   };
   const readAfterLoad = async () => {
     if (!map) return;
-    const loaded = await waitForSourceLoaded(map, sourceId, { timeoutMs: 15000 });
+    const loaded = await waitForSourceLoaded(map, sourceId, { timeoutMs: 15_000 });
     if (!loaded) {
       status.error("数据源等待超时");
       return;
@@ -283,7 +267,7 @@ export const renderPbfLayer: ExampleRender = (container, options) => {
     const fitted = await fitToRenderedLayer(map, {
       layerId,
       sourceId,
-      wait: { timeoutMs: 15000 },
+      wait: { timeoutMs: 15_000 },
       beforeQuery: () => setZoom(map as MapLike, 11),
     });
     status.info(fitted ? "已按渲染要素适配视野" : "当前视口没有可适配要素");
@@ -335,19 +319,36 @@ export const renderViewport: ExampleRender = (container, options) => {
       pointLayer(sourceId, layerId),
     ]);
     status.info("点、线、面覆盖物已绘制");
-    addButton(bar, "easeTo 天安门", () => easeTo(map, {
-      center: [116.3976, 39.9087],
-      zoom: 12,
-    }));
+    addButton(bar, "easeTo 天安门", () =>
+      easeTo(map, {
+        center: [116.3976, 39.9087],
+        zoom: 12,
+      }),
+    );
     addButton(bar, "panTo 中关村", () => panTo(map, [116.3154, 39.9829]));
     addButton(bar, "setZoom 14", () => setZoom(map, 14));
-    addButton(bar, "fitToFeatures", () => fitToFeatures(map, viewportOverlays, {
-      padding: { top: 60, right: 60, bottom: 60, left: 60 },
-    }));
-    addButton(bar, "fitToGeometry", () => fitToGeometry(map, {
-      type: "Polygon",
-      coordinates: [[[116.35, 39.88], [116.5, 39.88], [116.5, 39.98], [116.35, 39.88]]],
-    }, { padding: { top: 80, right: 80, bottom: 80, left: 80 } }));
+    addButton(bar, "fitToFeatures", () =>
+      fitToFeatures(map, viewportOverlays, {
+        padding: { top: 60, right: 60, bottom: 60, left: 60 },
+      }),
+    );
+    addButton(bar, "fitToGeometry", () =>
+      fitToGeometry(
+        map,
+        {
+          type: "Polygon",
+          coordinates: [
+            [
+              [116.35, 39.88],
+              [116.5, 39.88],
+              [116.5, 39.98],
+              [116.35, 39.88],
+            ],
+          ],
+        },
+        { padding: { top: 80, right: 80, bottom: 80, left: 80 } },
+      ),
+    );
   });
   return clean;
 };
@@ -356,7 +357,7 @@ export const renderMarkerCleanup: ExampleRender = (container, options) => {
   const bar = createControlBar(container);
   const clean = renderWithMap(container, options, "Marker 清理管理", (map, status) => {
     const markers: minemap.Marker[] = [];
-    const mixed: Array<minemap.Marker | minemap.Popup> = [];
+    const mixed: (minemap.Marker | minemap.Popup)[] = [];
     const addMarkers = () => {
       markerPoints.features.forEach((feature, index) => {
         const marker = new minemap.Marker(undefined, {
@@ -376,9 +377,11 @@ export const renderMarkerCleanup: ExampleRender = (container, options) => {
       const marker = new minemap.Marker().setLngLat([116.37, 39.95]).addTo(map);
       const popup = new minemap.Popup({ closeOnClick: false })
         .setLngLat([116.43, 39.95])
-        .setDOMContent(Object.assign(document.createElement("div"), {
-          textContent: "混合 Popup",
-        }))
+        .setDOMContent(
+          Object.assign(document.createElement("div"), {
+            textContent: "混合 Popup",
+          }),
+        )
         .addTo(map);
       mixed.push(marker, popup);
       status.info("已添加 Marker + Popup");
@@ -403,12 +406,14 @@ export const renderGeometry: ExampleRender = (container, options) => {
     const sourceId = createSourceId("demo", "geometry");
     const layerId = createLayerId("demo", "geometry");
     upsertGeoJSONSource(map, { id: sourceId, data: routeLine });
-    ensureLayers(map, [{
-      id: layerId,
-      type: "line",
-      source: sourceId,
-      paint: { "line-color": "#4de08b", "line-width": 3 },
-    }]);
+    ensureLayers(map, [
+      {
+        id: layerId,
+        type: "line",
+        source: sourceId,
+        paint: { "line-color": "#4de08b", "line-width": 3 },
+      },
+    ]);
     status.info("几何工具计算完成");
   });
 
@@ -444,10 +449,18 @@ export const renderGeometry: ExampleRender = (container, options) => {
   const polygons = filterFeaturesByGeometryType(mixedFeatures, "Polygon");
   log.log(`bearing = ${getBearing(geoDemo.currentPoint, geoDemo.nextPoint).toFixed(4)}`);
   log.log(`rotation = ${getRotation(90).toFixed(4)}`);
-  log.log(`rotationByCoordinate = ${getRotationByCoordinate(geoDemo.currentPoint, geoDemo.nextPoint).toFixed(4)}`);
-  log.log(`rightIntersection = ${JSON.stringify(getPolygonRightIntersection(geoDemo.polygonCoords))}`);
-  log.log(`coordinates=${coordinates.length}, endpoints=${endpoints.length}, vertices=${vertices.length}`);
-  log.log(`filtered Point=${points.length}, LineString=${lines.length}, Polygon=${polygons.length}`);
+  log.log(
+    `rotationByCoordinate = ${getRotationByCoordinate(geoDemo.currentPoint, geoDemo.nextPoint).toFixed(4)}`,
+  );
+  log.log(
+    `rightIntersection = ${JSON.stringify(getPolygonRightIntersection(geoDemo.polygonCoords))}`,
+  );
+  log.log(
+    `coordinates=${coordinates.length}, endpoints=${endpoints.length}, vertices=${vertices.length}`,
+  );
+  log.log(
+    `filtered Point=${points.length}, LineString=${lines.length}, Polygon=${polygons.length}`,
+  );
   try {
     assertCoordinate([116.4, 39.9]);
     log.log("assertCoordinate -> valid");

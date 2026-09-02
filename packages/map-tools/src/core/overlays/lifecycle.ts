@@ -1,10 +1,10 @@
 import { invalidArgument, sdkError } from "../errors";
 
-export type RemovableOverlay = { remove(): void };
+export interface RemovableOverlay {
+  remove(): void;
+}
 
-export function removeOverlays(
-  overlays: RemovableOverlay | readonly RemovableOverlay[],
-): number {
+export function removeOverlays(overlays: RemovableOverlay | readonly RemovableOverlay[]): number {
   if (overlays == null) invalidArgument("overlays is required");
   const list = Array.isArray(overlays) ? overlays : [overlays];
   let removed = 0;

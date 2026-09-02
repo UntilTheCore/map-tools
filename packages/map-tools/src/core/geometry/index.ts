@@ -1,11 +1,4 @@
-import {
-  bearing,
-  centerOfMass,
-  lineIntersect,
-  lineString,
-  point,
-  polygon,
-} from "@turf/turf";
+import { bearing, centerOfMass, lineIntersect, lineString, point, polygon } from "@turf/turf";
 import type { Feature, Point } from "geojson";
 import type { Coordinate } from "../../types/geometry";
 import { assertCoordinate } from "./coordinate";
@@ -14,19 +7,14 @@ import { getPolygonVertices } from "./polygon";
 import { filterFeaturesByGeometryType } from "./featureFilter";
 import { invalidArgument } from "../errors";
 
-export {
-  assertCoordinate,
-  filterFeaturesByGeometryType,
-  getLineEndpoints,
-  getPolygonVertices,
-};
+export { assertCoordinate, filterFeaturesByGeometryType, getLineEndpoints, getPolygonVertices };
 export { isCoordinate } from "./coordinate";
 export type { FeatureGeometryType } from "./featureFilter";
 
 export function getBearing(from: Coordinate, to: Coordinate): number {
   assertCoordinate(from);
   assertCoordinate(to);
-  return bearing(point(Array.from(from)), point(Array.from(to)));
+  return bearing(point([...from]), point([...to]));
 }
 
 export function getRotation(value: number, compensation = 180): number {
@@ -44,11 +32,9 @@ export function getRotationByCoordinate(
   return getRotation(getBearing(from, to), compensation);
 }
 
-export function getCoordinatesFromPoints(
-  features: readonly Feature<Point>[],
-): Coordinate[] {
+export function getCoordinatesFromPoints(features: readonly Feature<Point>[]): Coordinate[] {
   return features.map((feature) => {
-    const coordinates = feature.geometry.coordinates;
+    const { coordinates } = feature.geometry;
     return [coordinates[0], coordinates[1]] as Coordinate;
   });
 }
@@ -58,7 +44,7 @@ export function getPolygonRightIntersection(
 ): Coordinate | undefined {
   if (coordinates.length < 3) return undefined;
   coordinates.forEach(assertCoordinate);
-  const ring = coordinates.map((coordinate) => Array.from(coordinate));
+  const ring = coordinates.map((coordinate) => [...coordinate]);
   const first = ring[0];
   const last = ring[ring.length - 1];
   if (first[0] !== last[0] || first[1] !== last[1]) ring.push([...first]);

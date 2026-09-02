@@ -28,12 +28,14 @@ const updated = updateSourceData(map, "district-source", featureCollection);
 replaceVectorSource(map, {
   id: "landuse-source",
   tiles: ["https://example.test/{z}/{x}/{y}.pbf"],
-  layers: [{
-    id: "landuse-fill",
-    type: "fill",
-    source: "landuse-source",
-    "source-layer": "Landuse",
-  }],
+  layers: [
+    {
+      id: "landuse-fill",
+      type: "fill",
+      source: "landuse-source",
+      "source-layer": "Landuse",
+    },
+  ],
 });
 ```
 

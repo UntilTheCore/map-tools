@@ -36,21 +36,21 @@ SDK 没有官方 npm 类型包。CDN Script 用户在 TypeScript 中显式启用
 
 ## 入口
 
-| 场景 | 导入路径 | 能力 |
-| --- | --- | --- |
-| 核心 | `@ym/map-tools` | 全部框架无关 core API 与模块类型 |
-| Resources | `@ym/map-tools/resources` | source/layer 创建、替换、清理、id |
-| Layers | `@ym/map-tools/layers` | 图层显隐 |
-| Query | `@ym/map-tools/query` | source 等待、渲染要素查询 |
-| Viewport | `@ym/map-tools/viewport` | 相机与 bbox 视野 |
-| Geometry | `@ym/map-tools/geometry` | 坐标与纯几何工具 |
-| Overlays | `@ym/map-tools/overlays` | marker/popup 覆盖物清理 |
-| Popup | `@ym/map-tools/popup` | 框架无关 `createPopupDom` |
-| Events | `@ym/map-tools/events` | `createMapEventController` 与统一事件类型 |
-| Vue 3 | `@ym/map-tools/vue3` | `useMap`、Vue `createPopupDom` |
-| Vue 2.7 | `@ym/map-tools/vue2` | vue-demi 适配的同名 API |
-| React | `@ym/map-tools/react` | `useMap`、React `createPopupDom` |
-| UMD 类型 | `@ym/map-tools/umd` | `FE_utils` 与 minemap 全局声明 |
+| 场景      | 导入路径                  | 能力                                      |
+| --------- | ------------------------- | ----------------------------------------- |
+| 核心      | `@ym/map-tools`           | 全部框架无关 core API 与模块类型          |
+| Resources | `@ym/map-tools/resources` | source/layer 创建、替换、清理、id         |
+| Layers    | `@ym/map-tools/layers`    | 图层显隐                                  |
+| Query     | `@ym/map-tools/query`     | source 等待、渲染要素查询                 |
+| Viewport  | `@ym/map-tools/viewport`  | 相机与 bbox 视野                          |
+| Geometry  | `@ym/map-tools/geometry`  | 坐标与纯几何工具                          |
+| Overlays  | `@ym/map-tools/overlays`  | marker/popup 覆盖物清理                   |
+| Popup     | `@ym/map-tools/popup`     | 框架无关 `createPopupDom`                 |
+| Events    | `@ym/map-tools/events`    | `createMapEventController` 与统一事件类型 |
+| Vue 3     | `@ym/map-tools/vue3`      | `useMap`、Vue `createPopupDom`            |
+| Vue 2.7   | `@ym/map-tools/vue2`      | vue-demi 适配的同名 API                   |
+| React     | `@ym/map-tools/react`     | `useMap`、React `createPopupDom`          |
+| UMD 类型  | `@ym/map-tools/umd`       | `FE_utils` 与 minemap 全局声明            |
 
 UMD 运行时继续使用：
 
@@ -182,13 +182,7 @@ unbindAll();
 模块类型：
 
 ```ts
-import type {
-  Coordinate,
-  MapLayer,
-  MapSource,
-  Padding,
-  RenderedFeature,
-} from "@ym/map-tools";
+import type { Coordinate, MapLayer, MapSource, Padding, RenderedFeature } from "@ym/map-tools";
 ```
 
 `MapSource` 是 `geojson | vector` 判别联合。不要向 Vector source 调用 `setData`；使用 `isGeoJSONSource` 进行运行时缩窄。

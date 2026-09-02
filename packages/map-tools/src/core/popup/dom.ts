@@ -1,14 +1,9 @@
 import { MapToolsError } from "../errors";
 
 export type PopupContent =
-  | { kind: "text"; value: string }
-  | { kind: "html"; value: string }
-  | { kind: "node"; value: Node };
+  { kind: "text"; value: string } | { kind: "html"; value: string } | { kind: "node"; value: Node };
 
-export type PopupMountFn<C> = (
-  container: HTMLElement,
-  content: C,
-) => void | (() => void);
+export type PopupMountFn<C> = (container: HTMLElement, content: C) => void | (() => void);
 
 export interface PopupDomHandle {
   element: HTMLElement;
@@ -16,14 +11,8 @@ export interface PopupDomHandle {
 }
 
 export function createPopupDom(content: PopupContent): PopupDomHandle;
-export function createPopupDom<C>(
-  content: C,
-  mount: PopupMountFn<C>,
-): PopupDomHandle;
-export function createPopupDom(
-  content: unknown,
-  mount?: PopupMountFn<unknown>,
-): PopupDomHandle {
+export function createPopupDom<C>(content: C, mount: PopupMountFn<C>): PopupDomHandle;
+export function createPopupDom(content: unknown, mount?: PopupMountFn<unknown>): PopupDomHandle {
   if (typeof document === "undefined") {
     throw new MapToolsError("DOM_UNAVAILABLE", "document is not available");
   }

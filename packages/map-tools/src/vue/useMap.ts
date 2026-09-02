@@ -4,12 +4,7 @@ import {
   createMapEventController,
   type MapEventController,
 } from "../core/events/mapEventController";
-import type {
-  MapLike,
-  UseMapEventMap,
-  UseMapOptions,
-  UseMapReturn,
-} from "../types/public";
+import type { MapLike, UseMapEventMap, UseMapOptions, UseMapReturn } from "../types/public";
 
 export type { MapLike } from "../types/public";
 
@@ -31,8 +26,7 @@ export type {
   UseMapReturn,
 } from "../types/public";
 
-export interface VueUseMapReturn
-  extends UseMapReturn<Ref<MapLike | null>> {
+export interface VueUseMapReturn extends UseMapReturn<Ref<MapLike | null>> {
   mapRef: Ref<MapLike | null>;
   setMap(map: MapLike | null): void;
   on<K extends keyof UseMapEventMap>(
@@ -47,9 +41,7 @@ export interface VueUseMapReturn
 }
 
 export function useMap(options: UseMapOptions = {}): VueUseMapReturn {
-  const mapRef = shallowRef<MapLike | null>(
-    options.map ? markRaw(options.map) : null,
-  );
+  const mapRef = shallowRef<MapLike | null>(options.map ? markRaw(options.map) : null);
   const controller: MapEventController = createMapEventController({
     layers: options.layers,
     zoomQueryBy: options.zoomQueryBy,

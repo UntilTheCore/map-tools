@@ -40,7 +40,9 @@ export default function render(container: HTMLElement, options: RenderOptions): 
     if (!map) return;
     lastPoint = event.point;
     const features = FE_utils.queryRenderedFeatures(map, { point: event.point, layers: [layerId] });
-    log.log(features.length > 0 ? `mousemove:layer ${featureName(features[0])}` : "mousemove:empty");
+    log.log(
+      features.length > 0 ? `mousemove:layer ${featureName(features[0])}` : "mousemove:empty",
+    );
   };
   const onZoomEnd = () => {
     if (!map || !lastPoint) return;
@@ -68,7 +70,14 @@ export default function render(container: HTMLElement, options: RenderOptions): 
       }
       map = currentMap;
       FE_utils.upsertGeoJSONSource(currentMap, { id: sourceId, data: districtA });
-      FE_utils.ensureLayers(currentMap, [{ id: layerId, type: "fill", source: sourceId, paint: { "fill-color": "#4de08b", "fill-opacity": 0.3 } }]);
+      FE_utils.ensureLayers(currentMap, [
+        {
+          id: layerId,
+          type: "fill",
+          source: sourceId,
+          paint: { "fill-color": "#4de08b", "fill-opacity": 0.3 },
+        },
+      ]);
       log.log(`loaded: 已添加 ${layerId}`);
     })
     .catch((error: unknown) => log.log(`初始化失败: ${errorMessage(error)}`));

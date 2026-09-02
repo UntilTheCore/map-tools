@@ -1,11 +1,6 @@
 import Vue from "vue2";
 import { useMap } from "@ym/map-tools/vue2";
-import {
-  createLayerId,
-  createSourceId,
-  ensureLayers,
-  upsertGeoJSONSource,
-} from "@ym/map-tools";
+import { createLayerId, createSourceId, ensureLayers, upsertGeoJSONSource } from "@ym/map-tools";
 import {
   addButton,
   createControlBar,
@@ -19,10 +14,7 @@ import { districtA } from "../shared/data";
 import { createMinemapMap } from "../shared/loadMinemap";
 import { errorMessage, featureName } from "../shared/v3";
 
-export default function render(
-  container: HTMLElement,
-  options: RenderOptions,
-): () => void {
+export default function render(container: HTMLElement, options: RenderOptions): () => void {
   styleHost(container);
   if (!options.token) {
     const clean = renderNoTokenPanel(container, "useMap 事件监听");
@@ -53,21 +45,27 @@ export default function render(
 
       on("loaded", ({ map }) => {
         upsertGeoJSONSource(map, { id: sourceId, data: districtA });
-        ensureLayers(map, [{
-          id: layerId,
-          type: "fill",
-          source: sourceId,
-          paint: { "fill-color": "#4de08b", "fill-opacity": 0.3 },
-        }]);
+        ensureLayers(map, [
+          {
+            id: layerId,
+            type: "fill",
+            source: sourceId,
+            paint: { "fill-color": "#4de08b", "fill-opacity": 0.3 },
+          },
+        ]);
         log.log(`loaded: 已添加 ${layerId}`);
       });
       on("click:layer", ({ features, layerIds }) => {
         log.log(`click:layer ${layerIds.join(", ")} ${featureName(features[0])}`);
       });
       on("click:empty", ({ mouseCoordinate }) => {
-        log.log(`click:empty ${mouseCoordinate?.map((value) => value.toFixed(4)).join(", ") ?? "-"}`);
+        log.log(
+          `click:empty ${mouseCoordinate?.map((value) => value.toFixed(4)).join(", ") ?? "-"}`,
+        );
       });
-      on("mousemove:layer", ({ features }) => log.log(`mousemove:layer ${featureName(features[0])}`));
+      on("mousemove:layer", ({ features }) =>
+        log.log(`mousemove:layer ${featureName(features[0])}`),
+      );
       on("mousemove:empty", () => log.log("mousemove:empty"));
       on("zoomend:layer", ({ features }) => log.log(`zoomend:layer ${featureName(features[0])}`));
       on("zoomend:empty", () => log.log("zoomend:empty"));

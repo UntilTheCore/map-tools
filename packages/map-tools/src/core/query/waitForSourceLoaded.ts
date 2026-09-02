@@ -19,18 +19,12 @@ export function waitForSourceLoaded(
     throw new MapToolsError("INVALID_ARGUMENT", "options must be an object");
   }
   const timeoutMs = options.timeoutMs ?? 30_000;
-  const intervalMs = options.intervalMs ?? 1_000;
+  const intervalMs = options.intervalMs ?? 1000;
   if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
-    throw new MapToolsError(
-      "INVALID_ARGUMENT",
-      "timeoutMs must be a non-negative number",
-    );
+    throw new MapToolsError("INVALID_ARGUMENT", "timeoutMs must be a non-negative number");
   }
   if (!Number.isFinite(intervalMs) || intervalMs <= 0) {
-    throw new MapToolsError(
-      "INVALID_ARGUMENT",
-      "intervalMs must be greater than zero",
-    );
+    throw new MapToolsError("INVALID_ARGUMENT", "intervalMs must be greater than zero");
   }
 
   return new Promise<boolean>((resolve, reject) => {

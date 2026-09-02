@@ -5,10 +5,7 @@
 ```ts
 const handle = createPopupDom({ kind: "text", value: "安全的文本内容" });
 
-new minemap.Popup()
-  .setLngLat([116.4, 39.9])
-  .setDOMContent(handle.element)
-  .addTo(map);
+new minemap.Popup().setLngLat([116.4, 39.9]).setDOMContent(handle.element).addTo(map);
 
 handle.dispose();
 ```

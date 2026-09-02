@@ -5,9 +5,7 @@ export function asCoordinate(position: Position): Coordinate {
   return [position[0], position[1]] as Coordinate;
 }
 
-export function asFeatureCollection(
-  features: readonly Feature[],
-): FeatureCollection {
+export function asFeatureCollection(features: readonly Feature[]): FeatureCollection {
   return {
     type: "FeatureCollection",
     features: [...features],

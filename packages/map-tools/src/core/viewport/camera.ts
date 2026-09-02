@@ -3,10 +3,7 @@ import type { CameraOptions, MapLike } from "../../types/map";
 import { assertCoordinate } from "../geometry/coordinate";
 import { invalidArgument, sdkError } from "../errors";
 
-export function easeTo(
-  map: Pick<MapLike, "easeTo">,
-  options: CameraOptions,
-): void {
+export function easeTo(map: Pick<MapLike, "easeTo">, options: CameraOptions): void {
   if (!map) invalidArgument("map is required");
   if (!options || typeof options !== "object") invalidArgument("options is required");
   if (options.center) assertCoordinate(options.center);
@@ -17,10 +14,7 @@ export function easeTo(
   }
 }
 
-export function panTo(
-  map: Pick<MapLike, "panTo">,
-  coordinate: Coordinate,
-): void {
+export function panTo(map: Pick<MapLike, "panTo">, coordinate: Coordinate): void {
   if (!map) invalidArgument("map is required");
   assertCoordinate(coordinate);
   try {
@@ -30,10 +24,7 @@ export function panTo(
   }
 }
 
-export function setZoom(
-  map: Pick<MapLike, "setZoom">,
-  zoom: number,
-): void {
+export function setZoom(map: Pick<MapLike, "setZoom">, zoom: number): void {
   if (!map) invalidArgument("map is required");
   if (!Number.isFinite(zoom)) invalidArgument("zoom must be a finite number");
   try {

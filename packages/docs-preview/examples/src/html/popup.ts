@@ -27,7 +27,7 @@ export default function render(container: HTMLElement, options: RenderOptions): 
   const sourceId = FE_utils.createSourceId("demo", "popupPoints");
   const layerId = FE_utils.createLayerId("demo", "popupPoints");
   const popups: minemap.Popup[] = [];
-  const handles: Array<ReturnType<typeof FE_utils.createPopupDom>> = [];
+  const handles: ReturnType<typeof FE_utils.createPopupDom>[] = [];
   let map: minemap.Map | null = null;
   let disposed = false;
 
@@ -53,7 +53,14 @@ export default function render(container: HTMLElement, options: RenderOptions): 
       }
       map = currentMap;
       FE_utils.upsertGeoJSONSource(currentMap, { id: sourceId, data: markerPoints });
-      FE_utils.ensureLayers(currentMap, [{ id: layerId, type: "circle", source: sourceId, paint: { "circle-radius": 7, "circle-color": "#4dc3e0" } }]);
+      FE_utils.ensureLayers(currentMap, [
+        {
+          id: layerId,
+          type: "circle",
+          source: sourceId,
+          paint: { "circle-radius": 7, "circle-color": "#4dc3e0" },
+        },
+      ]);
       status.info("点击地图创建 DOM Popup");
     })
     .catch((error: unknown) => {

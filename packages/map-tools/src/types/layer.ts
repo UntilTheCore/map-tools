@@ -42,4 +42,3 @@ export interface LayerInstance {
   source?: string | InlineLayerSource;
   [property: string]: unknown;
 }
-

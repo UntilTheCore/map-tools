@@ -1,0 +1,13 @@
+# 依赖
+node_modules
+
+# 构建产物（对齐根 .gitignore）
+dist
+.vitepress/cache
+.vitepress/dist
+packages/docs-preview/public
+packages/docs-preview/examples/public
+
+# 锁文件与工具目录
+pnpm-lock.yaml
+.husky/_

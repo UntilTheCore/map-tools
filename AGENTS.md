@@ -20,11 +20,11 @@ map-tools/                            # map-tools-monorepo（private，packageMa
 
 > 注：根级 `src/`、`lib/` 为历史同步产物，已删除（不再存在）；源码只认 `packages/` 下的文件。
 
-| 子项目 | 包名 | 版本 | 职责 |
-| --- | --- | --- | --- |
-| packages/map-tools | @ym/map-tools | 2.0.1 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓 |
-| packages/skills | map-tools-skills | 0.1.0 | Qoder 技能包，`packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools） |
-| packages/docs-preview | docs-preview | 1.0.0 | VitePress 文档站 + 示例中心（vue3/vue2/react/html 四框架 Tab、iframe 预览、源码面板） |
+| 子项目                | 包名             | 版本  | 职责                                                                                  |
+| --------------------- | ---------------- | ----- | ------------------------------------------------------------------------------------- |
+| packages/map-tools    | @ym/map-tools    | 2.0.1 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                        |
+| packages/skills       | map-tools-skills | 0.1.0 | Qoder 技能包，`packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）     |
+| packages/docs-preview | docs-preview     | 1.0.0 | VitePress 文档站 + 示例中心（vue3/vue2/react/html 四框架 Tab、iframe 预览、源码面板） |
 
 ## 2. 环境要求
 
@@ -41,11 +41,13 @@ map-tools/                            # map-tools-monorepo（private，packageMa
 以下命令均在**仓库根目录**执行（`pnpm --filter` 免去 cd 切换）：
 
 **安装**
+
 ```bash
 pnpm install
 ```
 
 **构建**
+
 ```bash
 pnpm build                              # 仅构建 @ym/map-tools（= pnpm --filter @ym/map-tools build）
 pnpm --filter @ym/map-tools build       # 产出 dist/（es+cjs 四入口）+ dist/umd/index.umd.js + dist/types
@@ -54,12 +56,28 @@ pnpm build:all                          # map-tools build + docs-preview build�
 ```
 
 **类型检查**
+
 ```bash
 pnpm typecheck                          # 递归执行 pnpm -r typecheck
 pnpm --filter @ym/map-tools typecheck   # 单包 tsc --noEmit
 ```
 
+**Lint 与格式化**
+
+```bash
+pnpm lint                               # oxlint（correctness+suspicious=error，style=warn）
+pnpm lint:fix                           # oxlint 自动修复
+pnpm format                             # prettier 全仓格式化（含 ts/tsx/vue/md/json/css/html）
+pnpm format:check                       # 仅校验格式，不写入
+```
+
+- 配置文件：[.oxlintrc.json](.oxlintrc.json)、[.prettierrc.json](.prettierrc.json)、[.prettierignore](.prettierignore)、[.editorconfig](.editorconfig)
+- 代码风格统一为**双引号 + 分号 + 2 空格缩进，printWidth 100**（与 prettier 配置一致，勿手动改回单引号）
+- pre-commit 钩子（husky + lint-staged）：提交时自动对**暂存文件**执行 `oxlint --fix` + `prettier --write`，oxlint error 未清零会阻断提交；钩子由根 package.json 的 `prepare: husky` 在 `pnpm install` 后自动启用（`git config core.hooksPath` → `.husky/_`）
+- 提交前建议本地先跑 `pnpm lint && pnpm format:check`，避免钩子拦截
+
 **文档开发**
+
 ```bash
 pnpm dev:docs                           # = pnpm --filter docs-preview dev，端口 5173（含 demos 预构建）
 pnpm --filter docs-preview build        # demos + vitepress build
@@ -69,6 +87,7 @@ pnpm --filter docs-preview preview      # vitepress preview
 > **首次运行 `pnpm dev:docs` 前需先 `pnpm build`**（或至少构建 `@ym/map-tools`）：docs-preview 的 `copy-umd` 脚本依赖 `@ym/map-tools` 的 `dist/umd` 产物，未构建时 demos 预构建会失败。
 
 **发布**
+
 ```bash
 # 首次发布前登录私仓：
 npm login --registry http://192.168.3.180:4873
@@ -101,13 +120,13 @@ src/
 
 ### 4.2 四入口与 exports 子路径
 
-| 导入路径 | 说明 |
-| --- | --- |
-| `@ym/map-tools` | 框架无关核心（全部 core API） |
-| `@ym/map-tools/vue2` | Vue 2（2.7+）适配，导出 `getPopupDom`、`useMap` |
-| `@ym/map-tools/vue3` | Vue 3 适配，与 vue2 共用同一套 vue-demi 实现 |
-| `@ym/map-tools/react` | React 18+ 适配，导出 `getPopupDom`、`useMap` |
-| `@ym/map-tools/umd` | UMD 产物 `dist/umd/index.umd.js`，全局名 `FE_utils` |
+| 导入路径              | 说明                                                |
+| --------------------- | --------------------------------------------------- |
+| `@ym/map-tools`       | 框架无关核心（全部 core API）                       |
+| `@ym/map-tools/vue2`  | Vue 2（2.7+）适配，导出 `getPopupDom`、`useMap`     |
+| `@ym/map-tools/vue3`  | Vue 3 适配，与 vue2 共用同一套 vue-demi 实现        |
+| `@ym/map-tools/react` | React 18+ 适配，导出 `getPopupDom`、`useMap`        |
+| `@ym/map-tools/umd`   | UMD 产物 `dist/umd/index.umd.js`，全局名 `FE_utils` |
 
 - `exports` 各子路径（`.` / `vue2` / `vue3` / `react`）均声明 `types` / `import` / `require` 三条件分支；`./umd` 为单字符串，直连 `dist/umd/index.umd.js`
 - `main`/`module`/`unpkg`/`jsdelivr` 字段已配置，`files` 仅发布 `dist`

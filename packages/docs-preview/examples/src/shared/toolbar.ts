@@ -5,11 +5,7 @@
 import { resolveToken, saveToken } from "./loadMinemap";
 import type { ExampleMeta } from "../registry";
 
-export function createToolbar(
-  host: HTMLElement,
-  meta: ExampleMeta,
-  variantLabel: string
-) {
+export function createToolbar(host: HTMLElement, meta: ExampleMeta, variantLabel: string) {
   host.style.cssText = [
     "height:44px;display:flex;align-items:center;gap:10px;padding:0 14px;",
     "background:linear-gradient(180deg,#0d1a15,#0a1210);",
@@ -48,7 +44,7 @@ export function createToolbar(
     const current = resolveToken();
     const input = window.prompt(
       "请输入 minemap token（写入 localStorage.MINEMAP_TOKEN）：",
-      current ?? ""
+      current ?? "",
     );
     if (input !== null && input.trim()) {
       saveToken(input.trim());
@@ -59,8 +55,7 @@ export function createToolbar(
   const back = document.createElement("a");
   back.textContent = "‹ 示例中心";
   back.href = "/examples-center/";
-  back.style.cssText =
-    "color:#4de08b;text-decoration:none;font-size:12px;";
+  back.style.cssText = "color:#4de08b;text-decoration:none;font-size:12px;";
 
   function updateTokenStatus() {
     const token = resolveToken();

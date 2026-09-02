@@ -37,10 +37,7 @@ setMap(map);
 ```ts
 const handle = createPopupDom(PopupComponent, { title: "详情" });
 
-new minemap.Popup()
-  .setLngLat([116.4, 39.9])
-  .setDOMContent(handle.element)
-  .addTo(map);
+new minemap.Popup().setLngLat([116.4, 39.9]).setDOMContent(handle.element).addTo(map);
 
 handle.dispose();
 ```

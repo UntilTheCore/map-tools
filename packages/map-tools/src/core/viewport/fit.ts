@@ -23,11 +23,7 @@ function toFitBoundsOptions(options: FitOptions) {
   };
 }
 
-function fitBounds(
-  map: Pick<MapLike, "fitBounds">,
-  bounds: BBox,
-  options: FitOptions,
-): boolean {
+function fitBounds(map: Pick<MapLike, "fitBounds">, bounds: BBox, options: FitOptions): boolean {
   try {
     map.fitBounds(bounds, toFitBoundsOptions(options));
   } catch (error) {
@@ -87,10 +83,7 @@ export function fitToGeometry(
   } catch {
     invalidArgument("geometry must be valid GeoJSON");
   }
-  if (
-    bounds.length < 4 ||
-    bounds.slice(0, 4).some((value) => !Number.isFinite(value))
-  ) {
+  if (bounds.length < 4 || bounds.slice(0, 4).some((value) => !Number.isFinite(value))) {
     invalidArgument("geometry must contain finite coordinates");
   }
   const [west, south, east, north] = bounds;
