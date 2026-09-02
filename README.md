@@ -63,6 +63,53 @@ pnpm format:check  # 仅校验格式，不写入
 - 若钩子自动修改了文件，重新 `git add` 后再次提交即可
 - 如确需跳过钩子（仅限紧急情况），使用 `git commit --no-verify` 并在提交说明中注明原因
 
+### 提交信息规范（commit-msg）
+
+提交信息遵循 [vuejs/vue 的 COMMIT_CONVENTION](https://github.com/vuejs/vue/blob/dev/.github/COMMIT_CONVENTION.md)，由 commitlint 在 commit-msg 阶段自动校验（配置见 [commitlint.config.mjs](commitlint.config.mjs)），不合规的提交会被**直接拒绝**。
+
+**格式**
+
+```
+<type>(<scope>?): <subject>
+<空行>
+<body>
+<空行>
+<footer>
+```
+
+**允许的 type（12 个）**
+
+| type     | 用途                     | type       | 用途                     |
+| -------- | ------------------------ | ---------- | ------------------------ |
+| `feat`   | 新功能（进 changelog）   | `refactor` | 重构（不改行为）         |
+| `fix`    | 缺陷修复（进 changelog） | `perf`     | 性能优化（进 changelog） |
+| `polish` | 打磨/小改进              | `test`     | 测试相关                 |
+| `docs`   | 文档                     | `workflow` | 工作流                   |
+| `style`  | 代码格式调整             | `ci`       | CI 配置                  |
+| `chore`  | 杂务/工具链              | `types`    | 类型声明                 |
+
+**subject 三原则**：祈使句现在时（"add" 而非 "added"）、首字母小写、结尾不加句号。header 整行不超过 **50** 字符；scope 可选，描述改动位置（如 `map`、`popup`、`docs`）。
+
+**revert 与破坏性变更**
+
+- 回滚提交：标题写 `revert: <被回滚提交的标题>`，正文写 `This reverts commit <hash>.`
+- 破坏性变更：footer 以 `BREAKING CHANGE:` 开头（加空格或空行）说明影响
+
+**示例**
+
+```bash
+feat(map): add fitBounds padding option     # 合规
+fix(popup): handle events on blur           # 合规
+docs(readme): commit convention             # 合规
+
+随便写一条不合规的消息                       # ✗ 缺少 type
+build: use webpack                           # ✗ build 不在允许的 12 个 type 内
+feat: This ends with a period.               # ✗ 大写开头 + 结尾句号
+feat: this subject is far too long to pass   # ✗ header 超 50 字符
+```
+
+手动校验：`pnpm commit:lint`（从 stdin 读入 message）。
+
 ## v3 重点
 
 - 核心按 `resources`、`layers`、`query`、`viewport`、`geometry`、`overlays`、`popup` 划分。

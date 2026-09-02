@@ -74,6 +74,7 @@ pnpm format:check                       # 仅校验格式，不写入
 - 配置文件：[.oxlintrc.json](.oxlintrc.json)、[.prettierrc.json](.prettierrc.json)、[.prettierignore](.prettierignore)、[.editorconfig](.editorconfig)
 - 代码风格统一为**双引号 + 分号 + 2 空格缩进，printWidth 100**（与 prettier 配置一致，勿手动改回单引号）
 - pre-commit 钩子（husky + lint-staged）：提交时自动对**暂存文件**执行 `oxlint --fix` + `prettier --write`，oxlint error 未清零会阻断提交；钩子由根 package.json 的 `prepare: husky` 在 `pnpm install` 后自动启用（`git config core.hooksPath` → `.husky/_`）
+- 提交信息规范（commit-msg 钩子 + commitlint）：遵循 [Vue COMMIT_CONVENTION](https://github.com/vuejs/vue/blob/dev/.github/COMMIT_CONVENTION.md)——格式 `<type>(<scope>?): <subject>`，type 限 `feat/fix/polish/docs/style/refactor/perf/test/workflow/ci/chore/types`，header ≤ 50 字符，subject 祈使句、首字母小写、无句号结尾，回滚用 `revert: <原标题>` 前缀；不合规提交会被拒绝，详见 README「提交信息规范」
 - 提交前建议本地先跑 `pnpm lint && pnpm format:check`，避免钩子拦截
 
 **文档开发**
