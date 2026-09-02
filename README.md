@@ -19,8 +19,27 @@ pnpm build:all
 
 ### 代码风格
 
-- 双引号、分号、2 空格缩进，单行宽度 100（由 prettier 强制，勿手动改回单引号）
-- 格式化范围：`ts / tsx / js / mjs / vue / css / html / json / md`（构建产物目录已在 .prettierignore 中排除）
+提交的代码必须满足以下格式要求（由 prettier 与 oxlint 自动强制，配置见 [.prettierrc.json](.prettierrc.json) / [.oxlintrc.json](.oxlintrc.json)）：
+
+| 项目     | 要求                                                                                                 |
+| -------- | ---------------------------------------------------------------------------------------------------- |
+| 引号     | 字符串一律使用**双引号**，勿手动改回单引号                                                           |
+| 分号     | 语句结尾必须有分号                                                                                   |
+| 缩进     | 2 空格，不使用 Tab                                                                                   |
+| 单行宽度 | 100 字符，超出部分由 prettier 自动折行                                                               |
+| 末尾逗号 | 多行对象/数组/参数一律带尾逗号（`trailingComma: "all"`）                                             |
+| 换行符   | 仓库统一 LF（.editorconfig）；工作区由 git autocrlf 处理，prettier 不强制改写（`endOfLine: "auto"`） |
+| 编码     | UTF-8，文件末尾保留一个空行                                                                          |
+| Markdown | 仅整理列表/表格/代码块结构，正文不强制换行重排（`proseWrap` 默认 preserve）                          |
+
+格式化范围：`ts / tsx / js / mjs / vue / css / html / json / md`（构建产物目录已在 .prettierignore 中排除）。
+
+Lint 分级要求：
+
+- `correctness` 与 `suspicious` 类规则为 **error**：提交时必须清零（如未使用变量/导入、`addEventListener` 优先于 `on*` 赋值等），否则 pre-commit 钩子会阻断提交
+- `style` 类规则当前为 **warn**：不阻断提交，但新代码建议顺手满足（如 `prefer-const`、`no-var`，多数可由 `pnpm lint:fix` 自动修复）
+
+不需要手工对齐格式——书写时只需保持上述大方向，其余交给钩子里的 `prettier --write` 自动处理。
 
 ### 常用命令
 
