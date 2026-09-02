@@ -11,3 +11,10 @@ packages/docs-preview/.vitepress/cache
 packages/docs-preview/.vitepress/dist
 packages/docs-preview/public/demos
 packages/docs-preview/examples/public/vendor
+
+# ai folder
+.qoder
+.codex
+.claude
+.trae
+.zcode

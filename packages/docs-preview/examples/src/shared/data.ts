@@ -1,7 +1,14 @@
-/**
- * 示例共享 GeoJSON 数据（北京城区周边），四框架变体复用。
- */
-export const districtA: GeoJSON.FeatureCollection = {
+import type {
+  Feature,
+  FeatureCollection,
+  LineString,
+  Point,
+  Polygon,
+} from "geojson";
+import type { Coordinate } from "@ym/map-tools";
+
+/** 示例共享 GeoJSON 数据（北京城区周边），四框架变体复用。 */
+export const districtA: FeatureCollection<Polygon> = {
   type: "FeatureCollection",
   features: [
     {
@@ -23,7 +30,7 @@ export const districtA: GeoJSON.FeatureCollection = {
   ],
 };
 
-export const districtB: GeoJSON.FeatureCollection = {
+export const districtB: FeatureCollection<Polygon> = {
   type: "FeatureCollection",
   features: [
     {
@@ -45,7 +52,7 @@ export const districtB: GeoJSON.FeatureCollection = {
   ],
 };
 
-export const markerPoints: GeoJSON.FeatureCollection = {
+export const markerPoints: FeatureCollection<Point> = {
   type: "FeatureCollection",
   features: [
     {
@@ -76,7 +83,7 @@ export const markerPoints: GeoJSON.FeatureCollection = {
   ],
 };
 
-export const routeLine: GeoJSON.FeatureCollection = {
+export const routeLine: FeatureCollection<LineString> = {
   type: "FeatureCollection",
   features: [
     {
@@ -98,7 +105,7 @@ export const routeLine: GeoJSON.FeatureCollection = {
 };
 
 /** 视野示例覆盖物（点 + 线 + 多边形混合） */
-export const viewportOverlays: GeoJSON.Feature[] = [
+export const viewportOverlays: Feature[] = [
   {
     type: "Feature",
     properties: { name: "起点" },
@@ -136,18 +143,18 @@ export const viewportOverlays: GeoJSON.Feature[] = [
 
 /** 几何工具示例坐标 */
 export const geoDemo = {
-  /** 演示多边形（用于 getCenterBetweenRightPointIntersection / getPolygonVertex） */
+  /** 演示多边形（用于 bbox 与顶点提取） */
   polygonCoords: [
     [116.35, 39.89],
     [116.42, 39.9],
     [116.44, 39.95],
     [116.36, 39.96],
     [116.35, 39.89],
-  ],
+  ] as Coordinate[],
   /** 方位角演示：起点 -> 终点 */
-  currentPoint: [116.4, 39.9] as number[],
-  nextPoint: [116.46, 39.94] as number[],
-  /** checkCoordinate 校验用例 */
+  currentPoint: [116.4, 39.9] as Coordinate,
+  nextPoint: [116.46, 39.94] as Coordinate,
+  /** assertCoordinate 校验用例 */
   checkCases: [
     { label: "[116.4, 39.9]", value: [116.4, 39.9] },
     { label: "'116.4,39.9'（字符串）", value: "116.4,39.9" },

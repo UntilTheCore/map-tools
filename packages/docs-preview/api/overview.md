@@ -1,110 +1,42 @@
 # API 总览
 
-以下清单从 `packages/map-tools` 源码与 `dist/types` 提取，与真实导出保持一致。
+`@ym/map-tools` v3 按领域导出。根入口导出全部核心运行时 API 和模块类型；需要控制打包边界时可使用领域子路径。
 
-## 模块划分
-
-| 模块 | 来源文件 | 页面 |
+| 领域 | 子路径 | 主要 API |
 | --- | --- | --- |
-| mapTool | `src/core/mapTool.ts` | [查看](/api/mapTool) |
-| layerTool | `src/core/layerTool.ts` | [查看](/api/layerTool) |
-| sourceTools | `src/core/sourceTools.ts` | [查看](/api/sourceTools) |
-| pointTool | `src/core/pointTool.ts` | [查看](/api/pointTool) |
-| lineTool | `src/core/lineTool.ts` | [查看](/api/lineTool) |
-| polygonTool | `src/core/polygonTool.ts` | [查看](/api/polygonTool) |
-| popupTool | `src/core/popupTool.ts` | [查看](/api/popupTool) |
-| useMap | `src/vue/useMap.ts` / `src/react/useMap.ts` | [查看](/api/useMap) |
+| 资源 | `@ym/map-tools/resources` | `upsertGeoJSONSource`、`updateSourceData`、`replaceVectorSource`、`ensureLayer`、`ensureLayers`、`removeResources` |
+| 图层 | `@ym/map-tools/layers` | `setLayerVisibility`、`getLayerVisibility`、`toggleLayerVisibility`、`setLayersVisibility` |
+| 查询 | `@ym/map-tools/query` | `waitForSourceLoaded`、`queryRenderedFeatures` |
+| 视野 | `@ym/map-tools/viewport` | `easeTo`、`panTo`、`setZoom`、`fitToFeatures`、`fitToGeometry`、`fitToRenderedLayer` |
+| 几何 | `@ym/map-tools/geometry` | 坐标断言、方位角、要素过滤、线端点、面顶点、业务交点 |
+| 覆盖物 | `@ym/map-tools/overlays` | `removeOverlays` |
+| Popup | `@ym/map-tools/popup` | `createPopupDom`、`PopupDomHandle` |
+| 事件 | `@ym/map-tools/events` | `createMapEventController`、统一 `on` / `off` 事件类型 |
+| 框架适配 | `@ym/map-tools/vue2`、`@ym/map-tools/vue3`、`@ym/map-tools/react` | `useMap`、框架版 `createPopupDom` |
+| Script 类型 | `@ym/map-tools/minemap`、`@ym/map-tools/umd` | `minemap` 与 `FE_utils` 显式全局声明 |
 
-## 根入口导出清单（`@ym/map-tools`）
+所有参数校验失败都会抛出 `MapToolsError`，其 `code` 为 `INVALID_ARGUMENT`、`SDK_ERROR` 或 `DOM_UNAVAILABLE`。查询无命中返回空数组；删除不存在的资源会忽略。
 
-```ts
-// mapTool
-destroyMap, clearAllSourceAndLayer,
-setSourceData, setMultipleLayerSourceData, setPbfSourceData,
-moveAndZoom, moveMap, setZoom,
-removeMarkers, removeMarkersOrPopups,
-getBearing, getRotation, getRotationByCoordinate,
-getCenterBetweenRightPointIntersection, checkCoordinate,
-setViewPortByPolygon, setViewPort, setPbfLayerViewport,
-getFeatureTypeList, FeatureTypeEnum, ViewPortOption,
+## 类型入口
 
-// layerTool
-setSourceIdName, setLayerIdName,
-showLayer, hideLayer, hideLayers, showLayers, toggleLayer,
-getPbfFeatureListSync, getPbfFeatureListAsync,
-
-// sourceTools
-checkSourceLoaded,
-
-// pointTool
-pointListToCoordList,
-
-// lineTool
-getLineStringEndpoint,
-
-// polygonTool
-getPolygonVertex,
-
-// popupTool
-getPopupDom,
-```
-
-## 子路径导出
-
-| 子路径 | 导出 |
-| --- | --- |
-| `@ym/map-tools/vue2` | `{ getPopupDom, useMap }` |
-| `@ym/map-tools/vue3` | `{ getPopupDom, useMap }` |
-| `@ym/map-tools/react` | `{ getPopupDom, useMap }` |
-
-- vue 版 `useMap` 返回的 `mapInstance` 为 `Ref<minemap.Map>`（`.value` 访问）；
-- react 版 `useMap` 返回的 `mapInstance` 为 `MutableRefObject<minemap.Map>`（`.current` 访问）。
-
-## 关键类型
+模块用户从根入口导入类型：
 
 ```ts
-export type RenderedFeature = Feature & { layer: { id: string } };
-
-export type EventDispatcherData = {
-    layerId: string;
-    feature: Feature | FeatureCollection;
-    mapEvent: any;
-};
-
-export type ZoomLayerEventData = {
-    zoom: number;
-    mouseCoordinate: number[];
-    mapCenterCoordinate: number[];
-} & EventDispatcherData;
-
-export type MapHookOption = {
-    map?: minemap.Map;
-    bindClickLayers?: string[];
-    bindMouseMoveLayers?: string[];
-    bindZoomLayers?: string[];
-    zoomQueryBy?: "map" | "mouse";
-};
-
-export type ViewPortOption = {
-    boundary?: number[]; // [上, 右, 下, 左]
-};
-
-export enum FeatureTypeEnum {
-    Point = "Point",
-    LineString = "LineString",
-    MultiLineString = "MultiLineString",
-    Polygon = "Polygon",
-    MultiPolygon = "MultiPolygon",
-}
+import type { Coordinate, MapLayer, MapSource, Padding, RenderedFeature } from "@ym/map-tools";
 ```
 
-## 快速索引
+副作用 API 可接受最小能力接口，例如 `CameraMap`、`SourceMap`、`LayerMap`、`RenderedFeatureQueryMap` 与 `RemovableMap`；完整地图实例使用 `MapLike`。
 
-- 地图操作：`destroyMap` / `moveAndZoom` / `moveMap` / `setZoom` / `setViewPort` / `setViewPortByPolygon` / `setPbfLayerViewport`
-- 数据源与图层：`setSourceData` / `setMultipleLayerSourceData` / `setPbfSourceData` / `checkSourceLoaded` / `setSourceIdName` / `setLayerIdName`
-- 图层显隐：`showLayer` / `hideLayer` / `showLayers` / `hideLayers` / `toggleLayer`
-- PBF 要素：`getPbfFeatureListSync` / `getPbfFeatureListAsync`
-- 覆盖物清理：`removeMarkers` / `removeMarkersOrPopups`
-- 几何计算：`getBearing` / `getRotation` / `getRotationByCoordinate` / `getCenterBetweenRightPointIntersection` / `checkCoordinate` / `pointListToCoordList` / `getLineStringEndpoint` / `getPolygonVertex` / `getFeatureTypeList`
-- 弹窗：`getPopupDom`
-- 框架 Hook：`useMap`
+minemap SDK 通过 CDN 的 Script 注入时，显式启用插件维护的补充声明：
+
+```ts
+/// <reference types="@ym/map-tools/minemap" />
+```
+
+UMD Script 用户改为：
+
+```ts
+/// <reference types="@ym/map-tools/umd" />
+```
+
+`minemap.d.ts` 仅覆盖本库、文档与示例实际使用过的 minemap v3.0.0 API，是经验型补充声明而非服务商官方类型包。

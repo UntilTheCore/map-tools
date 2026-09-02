@@ -1,6 +1,6 @@
 {
   "name": "@ym/map-tools",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "author": "ly",
   "license": "MIT",
   "type": "module",
@@ -34,7 +34,54 @@
       "import": "./dist/react.js",
       "require": "./dist/react.cjs"
     },
-    "./umd": "./dist/umd/index.umd.js",
+    "./resources": {
+      "types": "./dist/types/resources.d.ts",
+      "import": "./dist/resources.js",
+      "require": "./dist/resources.cjs"
+    },
+    "./layers": {
+      "types": "./dist/types/layers.d.ts",
+      "import": "./dist/layers.js",
+      "require": "./dist/layers.cjs"
+    },
+    "./query": {
+      "types": "./dist/types/query.d.ts",
+      "import": "./dist/query.js",
+      "require": "./dist/query.cjs"
+    },
+    "./viewport": {
+      "types": "./dist/types/viewport.d.ts",
+      "import": "./dist/viewport.js",
+      "require": "./dist/viewport.cjs"
+    },
+    "./geometry": {
+      "types": "./dist/types/geometry.d.ts",
+      "import": "./dist/geometry.js",
+      "require": "./dist/geometry.cjs"
+    },
+    "./overlays": {
+      "types": "./dist/types/overlays.d.ts",
+      "import": "./dist/overlays.js",
+      "require": "./dist/overlays.cjs"
+    },
+    "./popup": {
+      "types": "./dist/types/popup.d.ts",
+      "import": "./dist/popup.js",
+      "require": "./dist/popup.cjs"
+    },
+    "./events": {
+      "types": "./dist/types/events.d.ts",
+      "import": "./dist/events.js",
+      "require": "./dist/events.cjs"
+    },
+    "./minemap": {
+      "types": "./dist/types/minemap.d.ts"
+    },
+    "./umd": {
+      "types": "./dist/types/umd.d.ts",
+      "import": "./dist/umd/index.umd.js",
+      "require": "./dist/umd/index.umd.js"
+    },
     "./package.json": "./package.json"
   },
   "dependencies": {
@@ -65,6 +112,7 @@
   "scripts": {
     "build": "vite build && vite build --config vite.umd.config.ts",
     "typecheck": "tsc --noEmit",
+    "typecheck:types": "pnpm build && tsc --noEmit -p type-tests/tsconfig.json && tsc --noEmit -p type-tests/tsconfig.no-global.json && tsc --noEmit -p type-tests/tsconfig.nodenext.json && tsc --noEmit -p type-tests/tsconfig.no-global.nodenext.json",
     "publish:pkg": "pnpm publish --registry http://192.168.3.180:4873 --no-git-checks",
     "prepublishOnly": "pnpm build"
   },

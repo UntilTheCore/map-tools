@@ -1,154 +1,154 @@
+/**
+ * Supplementary declarations for the externally loaded minemap v3.0.0 SDK.
+ *
+ * The vendor does not publish an npm type package. This declaration is
+ * maintained from observed SDK usage and is not an official vendor package.
+ */
 /// <reference types="@types/geojson" />
 
-type LayerType = "fill" | "line" | "symbol" | "circle" | "heatmap" | "extrusion" | "raster" | "airline" | "dynamicLine" | "sprite" | "histogram" | "tracking" | "symtracking" | "background"
+import type {
+  CameraOptions,
+  FitBoundsOptions,
+  LngLatLike,
+  QueryRenderedFeaturesOptions,
+  RenderedFeature,
+} from "./public";
+import type { LayerInstance } from "./layer";
+import type { GeoJSONSourceInstance, MapSourceInstance } from "./source";
 
-declare type MapSource = {
-  type: "geojson" | "vector";
-  data?: GeoJSON.FeatureCollection | GeoJSON.Feature;
-  url?: string;
-  tiles?: string[];
-  [key: string]: any;
+declare global {
+  namespace minemap {
+    type Coordinate = import("./geometry").Coordinate;
+    type BBox = import("./geometry").BBox;
+    type Padding = import("./geometry").Padding;
+    type MapLayer = import("./layer").MapLayer;
+    type MapSource = import("./source").MapSource;
+    type PointLike = import("./events").PointLike;
+    type RenderedFeature = import("./map").RenderedFeature;
+    type Source = MapSourceInstance;
+    type GeoJSONSource = GeoJSONSourceInstance;
+    type Layer = LayerInstance;
+    type MapEventMap = import("./events").MapEventMap;
+
+    interface MapOptions {
+      container: string | HTMLElement;
+      preserveDrawingBuffer?: boolean;
+      style?: string;
+      center?: Coordinate;
+      zoom?: number;
+      pitch?: number;
+      maxZoom?: number;
+      minZoom?: number;
+      projection?: string;
+      logoControl?: boolean;
+      doubleClickZoom?: boolean;
+      [option: string]: unknown;
+    }
+
+    class Map {
+      constructor(options: MapOptions);
+      on<K extends keyof MapEventMap>(
+        eventName: K,
+        callback: (event: MapEventMap[K]) => void,
+      ): this;
+      off<K extends keyof MapEventMap>(
+        eventName: K,
+        callback: (event: MapEventMap[K]) => void,
+      ): this;
+      remove(): void;
+      addSource(id: string, source: minemap.MapSource): this;
+      getSource(id: string): Source | undefined;
+      removeSource(id: string): this;
+      addLayer(layer: minemap.MapLayer): this;
+      getLayer(id: string): Layer | undefined;
+      removeLayer(id: string): this;
+      moveLayer(downLayerId: string, upLayerId?: string): this;
+      getZoom(): number;
+      setZoom(zoom: number): this;
+      getCenter(): LngLatLike;
+      panTo(coordinate: minemap.Coordinate): this;
+      easeTo(options: CameraOptions): this;
+      fitBounds(bounds: minemap.BBox, options?: FitBoundsOptions): this;
+      setLayoutProperty(
+        layerId: string,
+        name: string,
+        value: unknown,
+        options?: Record<string, unknown>,
+      ): this;
+      getLayoutProperty(layerId: string, name: string): unknown;
+      setFilter(layerId: string, condition: readonly unknown[] | null): this;
+      isSourceLoaded(sourceId: string): boolean;
+      queryRenderedFeatures(
+        options?: QueryRenderedFeaturesOptions,
+      ): RenderedFeature[];
+      queryRenderedFeatures(
+        point?: Coordinate | PointLike,
+        options?: QueryRenderedFeaturesOptions,
+      ): RenderedFeature[];
+      querySourceFeatures(
+        sourceId: string,
+        options?: QueryRenderedFeaturesOptions,
+      ): RenderedFeature[];
+      loadImage(
+        url: string,
+        callback: (error: unknown, image: unknown) => void,
+      ): void;
+      getCanvas(): HTMLCanvasElement;
+      hasImage(name: string): boolean;
+      addImage(name: string, image: unknown, options?: unknown): void;
+      triggerRepaint(): this;
+    }
+
+    interface PopupOptions {
+      closeOnClick?: boolean;
+      closeButton?: boolean;
+      offset?: readonly number[];
+      minWidth?: string;
+      maxWidth?: string;
+      [option: string]: unknown;
+    }
+
+    class Popup {
+      constructor(options?: PopupOptions);
+      setLngLat(coordinate: minemap.Coordinate): Popup;
+      setDOMContent(element: HTMLElement): Popup;
+      addTo(map: Map): Popup;
+      remove(): void;
+      addClassName(className: string): void;
+    }
+
+    interface MarkerOptions {
+      offset?: readonly number[];
+      color?: string;
+      [option: string]: unknown;
+    }
+
+    class Marker {
+      constructor(element?: HTMLElement, options?: MarkerOptions);
+      setLngLat(coordinate: minemap.Coordinate): Marker;
+      addTo(map: Map): Marker;
+      isDraggable(): boolean;
+      setPopup(popup?: Popup): Marker;
+      togglePopup(): void;
+      remove(): void;
+    }
+
+    class Template {
+      static create(options: { type: string; map: Map; [key: string]: unknown }): unknown;
+    }
+
+    let domainUrl: string;
+    let dataDomainUrl: string;
+    let serverDomainUrl: string;
+    let spriteUrl: string;
+    let serviceUrl: string;
+    let key: string;
+    let solution: number;
+  }
+
+  interface Window {
+    minemap?: typeof minemap;
+  }
 }
 
-declare type MapLayer = {
-  id: string;
-  type: LayerType,
-  source: string | {
-    type: string;
-    url: string;
-  },
-  layout?: any;
-  paint?: any;
-  'source-layer'?: string,
-  minzoom?: number;
-  maxzoom?: number;
-  [key: string]: any;
-}
-
-declare namespace minemap {
-  let domainUrl: string;
-  let dataDomainUrl: string;
-  let serverDomainUrl: string;
-  let spriteUrl: string;
-  let serviceUrl: string;
-  let key: string;
-  let solution: number;
-  class Popup {
-    constructor(option: {
-      closeOnClick?: boolean,
-      closeButton?: boolean,
-      offset?: number[],
-      minWidth?: string,
-      maxWidth?: string,
-    })
-    setLngLat(data:any): Popup;
-    setDOMContent(el:any): Popup;
-    addTo(map: Map): Popup;
-    remove(): void;
-    addClassName(className: string): void;
-  }
-
-  class Marker {
-    constructor(el: HTMLDivElement, option: {
-      offset?: number[],
-      color?: string,
-    })
-    setLngLat(data:any): void;
-    addTo(map: Map): void;
-    isDraggable(): boolean;
-    setPopup(): Marker;
-    togglePopup(): void;
-    remove(): void;
-  }
-
-  class Map {
-    constructor(option: {
-      container: string,
-      preserveDrawingBuffer: boolean,
-      style: string,
-      center: [number, number],
-      zoom: number,
-      pitch: number,
-      maxZoom: number,
-      minZoom: number,
-      projection: string;
-      logoControl: boolean;
-      doubleClickZoom: boolean;
-    });
-
-
-    on(eventName: string, callback: (e: any) => void): void;
-    off(eventName: string, callback: (e: any) => void): void;
-    remove(): void;
-
-    // 图层相关
-    addSource(id: string, option: MapSource): void;
-    getSource(id: string): any;
-    removeSource(id: string): void;
-    addLayer(option: MapLayer): void;
-    getLayer(id: string): any;
-    removeLayer(id: string): void;
-
-    /**
-     * 将 downLayerId 图层移动到 upLayerId 下面, 如果不传 upLayerId, 那么 downLayerId 将被放到图层数组的末尾，即最高。
-     * @param downLayerId
-     * @param upLayerId
-     */
-    moveLayer(downLayerId: string, upLayerId?: string): void;
-    /**
-     * 获取地图层级
-      */
-    getZoom(): number;
-    setZoom(zoom: number): void;
-    zoomTo(zoom: number, options?: { duration: number; easing: () => number; offset: number[], animate: boolean }, eventData?: any): void;
-    getCenter(): { lng: number, lat: number };
-    setFilter(layerId: string, condition: (string | number)[] | null): void;
-    setLayoutProperty(layerId: string, name: string, value: any, options?: any): void;
-    getLayoutProperty(layerId: string, name: string): any;
-    /**
-     * 检查数据源是否加载完成
-     * @param sourceId 数据源 id
-     */
-    isSourceLoaded(sourceId: string): boolean;
-
-    // 工具相关
-    panTo(coordinate: number[]): void;
-
-    queryRenderedFeatures(point?: number[] | { x: number; y: number }, options?: {
-      layers?: string[],
-      filter?: any[],
-      validate?: boolean,
-    }): GeoJSON.Feature[];
-
-    queryRenderedFeatures(options?: {
-      layers?: string[],
-      filter?: any[],
-      validate?: boolean,
-    }): GeoJSON.Feature[];
-
-    querySourceFeatures(sourceId: String, options?: {
-      sourceLayer: string;
-      filter: any[];
-      validate: boolean;
-    }): GeoJSON.Feature[];
-
-    // 资源相关
-    loadImage(url: string, cb: (error: any, image: any) => void): void;
-    getCanvas(): any;
-    hasImage(url:any): boolean;
-    addImage(name: string, image: any, option?: any): void;
-
-    triggerRepaint(): void;
-
-    fitBounds(bound: any, option: any): void;
-
-    easeTo(param: { center: number[]; zoom: number }): void;
-  }
-
-
-  class Template {
-
-    static create(option1: { type: string; map: any }): any;
-  }
-
-}
+export {};

@@ -8,13 +8,7 @@
  *
  * token 获取顺序：URL ?token= -> localStorage MINEMAP_TOKEN
  */
-import type {} from "@ym/map-tools";
-
-declare global {
-  interface Window {
-    minemap: typeof minemap & { [key: string]: any };
-  }
-}
+import type {} from "@ym/map-tools/minemap";
 
 export const MINEMAP_CDN_MAIN =
   "https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js";
@@ -43,7 +37,7 @@ export function resolveToken(): string | null {
   }
 }
 
-export function saveToken(token: string) {
+export function saveToken(token: string): void {
   try {
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
   } catch {
@@ -97,18 +91,20 @@ export function loadMinemap(): Promise<typeof minemap> {
   if (!loadingPromise) {
     injectCss(MINEMAP_CSS);
     loadingPromise = injectScript(MINEMAP_CDN_MAIN)
-      .then(() => window.minemap)
-      .catch((err) => {
-        console.warn("[loadMinemap] 主 CDN 失败，尝试备选 CDN", err);
-        return injectScript(MINEMAP_CDN_FALLBACK).then(
-          () => window.minemap
-        );
+      .then(() => getLoadedMinemap())
+      .catch(() => {
+        return injectScript(MINEMAP_CDN_FALLBACK).then(() => {
+          if (!window.minemap) {
+            throw new Error("minemap SDK 未暴露 window.minemap");
+          }
+          return window.minemap;
+        });
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         loadingPromise = null;
         throw new Error(
           `minemap SDK 加载失败（${MINEMAP_CDN_MAIN} / ${MINEMAP_CDN_FALLBACK}），请检查网络。` +
-            (err && err.message ? ` ${err.message}` : "")
+            (err instanceof Error ? ` ${err.message}` : ` ${String(err)}`)
         );
       });
   }
@@ -119,8 +115,9 @@ export function loadMinemap(): Promise<typeof minemap> {
  * 初始化 minemap 全局配置（domainUrl / spriteUrl / serviceUrl / key / solution），
  * 依据官方 v3 文档与示例中心约定。
  */
-export function setupMinemapGlobals(token: string) {
+export function setupMinemapGlobals(token: string): typeof minemap {
   const m = window.minemap;
+  if (!m) throw new Error("minemap SDK 尚未加载");
   m.domainUrl = "https://minemap.minedata.cn";
   m.dataDomainUrl = "https://minemap.minedata.cn";
   m.serverDomainUrl = "https://sd-data.minedata.cn";
@@ -135,7 +132,8 @@ export function setupMinemapGlobals(token: string) {
 export function createMinemapMap(
   container: HTMLElement,
   token: string,
-  extra: Record<string, any> = {}
+  extra: Record<string, unknown> = {},
+  onCreated?: (map: minemap.Map) => void,
 ): Promise<minemap.Map> {
   return loadMinemap().then(
     (m) =>
@@ -162,8 +160,15 @@ export function createMinemapMap(
             doubleClickZoom: true,
             ...extra,
           });
-        } catch (e: any) {
-          reject(new Error("minemap.Map 创建失败: " + (e && e.message)));
+        } catch (e: unknown) {
+          reject(new Error("minemap.Map 创建失败: " + getErrorMessage(e)));
+          return;
+        }
+        try {
+          onCreated?.(map);
+        } catch (error: unknown) {
+          map.remove();
+          reject(new Error("minemap.Map 初始化回调失败: " + getErrorMessage(error)));
           return;
         }
         let settled = false;
@@ -172,18 +177,29 @@ export function createMinemapMap(
           settled = true;
           resolve(map as minemap.Map);
         };
-        const onError = (e: any) => {
+        const onError = (e: minemap.MapEventMap["error"]) => {
           if (settled) return;
           settled = true;
           reject(
             new Error(
               "底图加载失败（token 无效或无权限）: " +
-                (e && e.error ? e.error : e)
+                (e.error ? String(e.error) : String(e))
             )
           );
         };
-        (map as any).on("load", onLoad);
-        (map as any).on("error", onError);
+        map.on("load", onLoad);
+        map.on("error", onError);
       })
   );
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function getLoadedMinemap(): typeof minemap {
+  if (!window.minemap) {
+    throw new Error("minemap SDK 未暴露 window.minemap");
+  }
+  return window.minemap;
 }

@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.no-global.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
+  }
+}

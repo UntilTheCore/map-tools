@@ -1,32 +1,30 @@
-/**
- * 示例：useMap 事件监听（Vue 3 变体）
- * 核心 API：useMap（@ym/map-tools/vue3）
- *   mapInitialize / onMapLoaded / onClickLayerEventDispatcher / onClickNoInLayers /
- *   onMouseMoveLayerEventDispatcher / onMoveNoInLayers /
- *   onZoomLayerEventDispatcher / onZoomNoInLayers / unBindMapEvent
- */
-import { createApp, h } from "vue";
+import { createApp, defineComponent, h, onMounted } from "vue";
 import { useMap } from "@ym/map-tools/vue3";
-import { setSourceData, setSourceIdName, setLayerIdName } from "@ym/map-tools";
 import {
-  styleHost,
-  createMapHost,
-  createLogPanel,
-  createControlBar,
+  createLayerId,
+  createSourceId,
+  ensureLayers,
+  upsertGeoJSONSource,
+} from "@ym/map-tools";
+import {
   addButton,
+  createControlBar,
+  createLogPanel,
+  createMapHost,
   renderNoTokenPanel,
+  styleHost,
   type RenderOptions,
 } from "../shared/demo";
-import { createMinemapMap } from "../shared/loadMinemap";
 import { districtA } from "../shared/data";
+import { createMinemapMap } from "../shared/loadMinemap";
+import { errorMessage, featureName } from "../shared/v3";
 
 export default function render(
   container: HTMLElement,
-  options: RenderOptions
+  options: RenderOptions,
 ): () => void {
-  const { token } = options;
   styleHost(container);
-  if (!token) {
+  if (!options.token) {
     const clean = renderNoTokenPanel(container, "useMap 事件监听");
     return () => {
       clean();
@@ -37,113 +35,79 @@ export default function render(
   const host = createMapHost(container);
   const bar = createControlBar(container);
   const log = createLogPanel(container, "useMap 事件日志");
-
-  const sourceId = setSourceIdName("demo", "eventPolygon");
-  const layerId = setLayerIdName("demo", "eventPolygon");
-
-  let mapRef: minemap.Map | null = null;
+  const sourceId = createSourceId("demo", "eventPolygon");
+  const layerId = createLayerId("demo", "eventPolygon");
   let disposed = false;
-  let unBind: (() => void) | null = null;
 
-  /** 渲染函数组件：承载 useMap 生命周期 */
-  const App = {
+  const App = defineComponent({
     setup() {
-      const {
-        mapInitialize,
-        onMapLoaded,
-        onClickLayerEventDispatcher,
-        onClickNoInLayers,
-        onMouseMoveLayerEventDispatcher,
-        onMoveNoInLayers,
-        onZoomLayerEventDispatcher,
-        onZoomNoInLayers,
-        unBindMapEvent,
-      } = useMap({
-        bindClickLayers: [layerId],
-        bindMouseMoveLayers: [layerId],
-        bindZoomLayers: [layerId],
+      const { mapRef, setMap, on, unbindAll } = useMap({
+        layers: {
+          click: [layerId],
+          mousemove: [layerId],
+          zoomend: [layerId],
+        },
         zoomQueryBy: "mouse",
+        mapLifecycle: "owned",
       });
 
-      onMapLoaded((map) => {
-        log.log("onMapLoaded → 地图已就绪，添加演示图层");
-        setSourceData(
-          map,
-          sourceId,
-          {
-            id: layerId,
-            type: "fill",
-            source: sourceId,
-            paint: { "fill-color": "#4de08b", "fill-opacity": 0.3 },
-          },
-          districtA as any
-        );
-        log.log(`已绑定图层 ${layerId}，可点击 / 移动 / 缩放触发事件`);
+      on("loaded", ({ map }) => {
+        upsertGeoJSONSource(map, { id: sourceId, data: districtA });
+        ensureLayers(map, [{
+          id: layerId,
+          type: "fill",
+          source: sourceId,
+          paint: { "fill-color": "#4de08b", "fill-opacity": 0.3 },
+        }]);
+        log.log(`loaded: 已添加 ${layerId}`);
+      });
+      on("click:layer", ({ features, layerIds }) => {
+        log.log(`click:layer ${layerIds.join(", ")} ${featureName(features[0])}`);
+      });
+      on("click:empty", ({ mouseCoordinate }) => {
+        log.log(`click:empty ${mouseCoordinate?.map((value) => value.toFixed(4)).join(", ") ?? "-"}`);
+      });
+      on("mousemove:layer", ({ features }) => {
+        log.log(`mousemove:layer ${featureName(features[0])}`);
+      });
+      on("mousemove:empty", () => log.log("mousemove:empty"));
+      on("zoomend:layer", ({ features, mapCenterCoordinate }) => {
+        log.log(`zoomend:layer ${featureName(features[0])} center=${mapCenterCoordinate?.join(",") ?? "-"}`);
+      });
+      on("zoomend:empty", () => log.log("zoomend:empty"));
+
+      onMounted(() => {
+        createMinemapMap(host, options.token!, {}, setMap)
+          .then(() => {
+            if (disposed) return;
+            log.log("setMap: 地图已交给 useMap 管理");
+          })
+          .catch((error: unknown) => {
+            if (!disposed) log.log(`初始化失败: ${errorMessage(error)}`);
+          });
       });
 
-      onClickLayerEventDispatcher((data) => {
-        const props = (data.feature as any)?.properties ?? {};
-        log.log(`点击图层：layerId=${data.layerId} name=${props.name ?? "-"}`);
+      addButton(bar, "解绑所有监听", () => {
+        unbindAll();
+        log.log("unbindAll: 本 Hook 注册的监听已解绑");
       });
-      onClickNoInLayers((e) => {
-        log.log(
-          `点击空白：lng=${e?.lngLat?.lng?.toFixed?.(4) ?? "-"} lat=${
-            e?.lngLat?.lat?.toFixed?.(4) ?? "-"
-          }`
-        );
+      addButton(bar, "查看 mapRef", () => {
+        log.log(`mapRef.value: ${mapRef.value ? "已绑定" : "null"}`);
       });
-      onMouseMoveLayerEventDispatcher((data) => {
-        log.log(`悬停图层：layerId=${data.layerId}`);
-      });
-      onMoveNoInLayers(() => {
-        log.log("悬停空白区域");
-      });
-      onZoomLayerEventDispatcher((data) => {
-        log.log(
-          `缩放命中图层：zoom=${data.zoom} layerId=${data.layerId} 鼠标=[${data.mouseCoordinate
-            .map((n: number) => n.toFixed(4))
-            .join(",")}]`
-        );
-      });
-      onZoomNoInLayers(() => {
-        log.log("缩放后鼠标位置无绑定图层");
-      });
-
-      unBind = () => unBindMapEvent();
-
-      createMinemapMap(host, token!)
-        .then((m) => {
-          if (disposed) {
-            m.remove();
-            return;
-          }
-          mapRef = m;
-          // 地图实例经 mapInitialize 注入 useMap（自动绑定事件）
-          mapInitialize(m);
-        })
-        .catch((err) => {
-          log.log("初始化失败：" + String(err?.message ?? err));
-        });
+      addButton(bar, "清空日志", () => log.clear());
 
       return () => h("div", { style: { display: "none" } });
     },
-  };
+  });
 
   const carrier = document.createElement("div");
-  carrier.style.display = "none";
   container.appendChild(carrier);
   const app = createApp(App);
   app.mount(carrier);
 
-  addButton(bar, "解绑事件 unBindMapEvent", () => {
-    unBind?.();
-    log.log("unBindMapEvent 已执行：点击/移动/缩放监听已解绑");
-  });
-  addButton(bar, "清空日志", () => log.clear());
-
   return () => {
     disposed = true;
-    app.unmount(); // 触发 onUnmounted → 自动 unBindMapEvent
+    app.unmount();
     container.innerHTML = "";
   };
 }

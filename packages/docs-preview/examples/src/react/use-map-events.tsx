@@ -1,205 +1,80 @@
-/**
- * 示例：useMap 事件监听（React 变体）
- * 核心 API：useMap（@ym/map-tools/react）
- *   mapInitialize / onMapLoaded / onClickLayerEventDispatcher / onClickNoInLayers /
- *   onMouseMoveLayerEventDispatcher / onMoveNoInLayers /
- *   onZoomLayerEventDispatcher / onZoomNoInLayers / unBindMapEvent
- *
- * 注意：react 版 mapInstance 为 MutableRefObject（通过 .current 访问），
- * 组件卸载时自动解绑事件；默认不销毁地图（如需销毁，useMap 传入 destroyOnUnmount: true）。
- */
 import { createRoot } from "react-dom/client";
 import { useEffect, useRef, useState } from "react";
 import { useMap } from "@ym/map-tools/react";
-import { setSourceData, setSourceIdName, setLayerIdName } from "@ym/map-tools";
-import { styleHost, renderNoTokenPanel, type RenderOptions } from "../shared/demo";
-import { createMinemapMap } from "../shared/loadMinemap";
+import {
+  createLayerId,
+  createSourceId,
+  ensureLayers,
+  upsertGeoJSONSource,
+} from "@ym/map-tools";
 import { districtA } from "../shared/data";
+import { createMinemapMap } from "../shared/loadMinemap";
+import { renderNoTokenPanel, styleHost, type RenderOptions } from "../shared/demo";
+import { errorMessage, featureName } from "../shared/v3";
 
 function Demo({ token }: { token: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const [logs, setLogs] = useState<string[]>([]);
   const logRef = useRef<string[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
+  const sourceId = createSourceId("demo", "eventPolygon");
+  const layerId = createLayerId("demo", "eventPolygon");
+  const { mapRef, setMap, on, unbindAll } = useMap({
+    layers: {
+      click: [layerId],
+      mousemove: [layerId],
+      zoomend: [layerId],
+    },
+    zoomQueryBy: "mouse",
+    mapLifecycle: "owned",
+  });
 
-  const log = (msg: string) => {
-    logRef.current = [...logRef.current, msg];
+  const appendLog = (message: string) => {
+    logRef.current = [...logRef.current, message];
     setLogs(logRef.current);
   };
 
-  const sourceId = setSourceIdName("demo", "eventPolygon");
-  const layerId = setLayerIdName("demo", "eventPolygon");
-
-  const {
-    mapInstance,
-    mapInitialize,
-    onMapLoaded,
-    onClickLayerEventDispatcher,
-    onClickNoInLayers,
-    onMouseMoveLayerEventDispatcher,
-    onMoveNoInLayers,
-    onZoomLayerEventDispatcher,
-    onZoomNoInLayers,
-    unBindMapEvent,
-  } = useMap({
-    bindClickLayers: [layerId],
-    bindMouseMoveLayers: [layerId],
-    bindZoomLayers: [layerId],
-    zoomQueryBy: "mouse",
-  });
-
   useEffect(() => {
+    const subscriptions = [
+      on("loaded", ({ map }) => {
+        upsertGeoJSONSource(map, { id: sourceId, data: districtA });
+        ensureLayers(map, [{ id: layerId, type: "fill", source: sourceId, paint: { "fill-color": "#4de08b", "fill-opacity": 0.3 } }]);
+        appendLog(`loaded: 已添加 ${layerId}`);
+      }),
+      on("click:layer", ({ features, layerIds }) => appendLog(`click:layer ${layerIds.join(", ")} ${featureName(features[0])}`)),
+      on("click:empty", ({ mouseCoordinate }) => appendLog(`click:empty ${mouseCoordinate?.map((value) => value.toFixed(4)).join(", ") ?? "-"}`)),
+      on("mousemove:layer", ({ features }) => appendLog(`mousemove:layer ${featureName(features[0])}`)),
+      on("mousemove:empty", () => appendLog("mousemove:empty")),
+      on("zoomend:layer", ({ features }) => appendLog(`zoomend:layer ${featureName(features[0])}`)),
+      on("zoomend:empty", () => appendLog("zoomend:empty")),
+    ];
     let disposed = false;
-    createMinemapMap(hostRef.current!, token)
-      .then((m) => {
-        if (disposed) {
-          m.remove();
-          return;
-        }
-        // 地图实例经 mapInitialize 注入 useMap（自动绑定事件）
-        mapInitialize(m);
+    createMinemapMap(hostRef.current!, token, {}, setMap)
+      .then(() => {
+        if (!disposed) appendLog("setMap: 地图已交给 useMap 管理");
       })
-      .catch((err) => log("初始化失败：" + String(err?.message ?? err)));
+      .catch((error: unknown) => {
+        if (!disposed) appendLog(`初始化失败: ${errorMessage(error)}`);
+      });
     return () => {
       disposed = true;
+      subscriptions.forEach((unsubscribe) => unsubscribe());
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [layerId, on, setMap, sourceId, token]);
 
-  onMapLoaded((map) => {
-    log("onMapLoaded → 地图已就绪，添加演示图层");
-    setSourceData(
-      map,
-      sourceId,
-      {
-        id: layerId,
-        type: "fill",
-        source: sourceId,
-        paint: { "fill-color": "#4de08b", "fill-opacity": 0.3 },
-      },
-      districtA as any
-    );
-    log(`已绑定图层 ${layerId}，可点击 / 移动 / 缩放触发事件`);
-  });
-
-  onClickLayerEventDispatcher((data) => {
-    const props = (data.feature as any)?.properties ?? {};
-    log(`点击图层：layerId=${data.layerId} name=${props.name ?? "-"}`);
-  });
-  onClickNoInLayers((e) => {
-    log(
-      `点击空白：lng=${e?.lngLat?.lng?.toFixed?.(4) ?? "-"} lat=${
-        e?.lngLat?.lat?.toFixed?.(4) ?? "-"
-      }`
-    );
-  });
-  onMouseMoveLayerEventDispatcher((data) => {
-    log(`悬停图层：layerId=${data.layerId}`);
-  });
-  onMoveNoInLayers(() => {
-    log("悬停空白区域");
-  });
-  onZoomLayerEventDispatcher((data) => {
-    log(
-      `缩放命中图层：zoom=${data.zoom} layerId=${data.layerId} 鼠标=[${data.mouseCoordinate
-        .map((n: number) => n.toFixed(4))
-        .join(",")}]`
-    );
-  });
-  onZoomNoInLayers(() => {
-    log("缩放后鼠标位置无绑定图层");
-  });
-
-  const unbind = () => {
-    unBindMapEvent();
-    log("unBindMapEvent 已执行：点击/移动/缩放监听已解绑");
-  };
-
-  return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <div
-        ref={hostRef}
-        style={{ position: "absolute", inset: 0 }}
-        className="demo-map-host"
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: 12,
-          zIndex: 30,
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 8,
-        }}
-      >
-        <button type="button" className="demo-btn" onClick={unbind}>
-          解绑事件 unBindMapEvent
-        </button>
-        <button
-          type="button"
-          className="demo-btn"
-          onClick={() => {
-            logRef.current = [];
-            setLogs([]);
-          }}
-        >
-          清空日志
-        </button>
-        <button
-          type="button"
-          className="demo-btn"
-          onClick={() =>
-            log(`mapInstance.current → ${mapInstance.current ? "存在" : "null"}`)
-          }
-        >
-          查看 mapInstance
-        </button>
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          right: 12,
-          top: 12,
-          bottom: 12,
-          zIndex: 30,
-          width: 280,
-          display: "flex",
-          flexDirection: "column",
-          borderRadius: 8,
-          overflow: "hidden",
-          background: "rgba(8,14,12,.9)",
-          border: "1px solid rgba(77,224,139,.3)",
-          fontFamily: "ui-monospace, Consolas, monospace",
-          fontSize: 12,
-          color: "#cdeee0",
-        }}
-      >
-        <div
-          style={{
-            padding: "8px 10px",
-            borderBottom: "1px solid rgba(77,224,139,.25)",
-            color: "#4de08b",
-            fontWeight: 600,
-          }}
-        >
-          useMap 事件日志
-        </div>
-        <div style={{ flex: 1, overflow: "auto", padding: "8px 10px", lineHeight: 1.6 }}>
-          {logs.map((l, i) => (
-            <div key={i}>
-              #{i + 1} {l}
-            </div>
-          ))}
-        </div>
-      </div>
+  return <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div ref={hostRef} className="demo-map-host" style={{ position: "absolute", inset: 0 }} />
+    <div style={{ position: "absolute", top: 12, left: 12, zIndex: 30, display: "flex", gap: 8 }}>
+      <button type="button" className="demo-btn" onClick={() => { unbindAll(); appendLog("unbindAll: 本 Hook 注册的监听已解绑"); }}>解绑所有监听</button>
+      <button type="button" className="demo-btn" onClick={() => appendLog(`mapRef.current: ${mapRef.current ? "已绑定" : "null"}`)}>查看 mapRef</button>
+      <button type="button" className="demo-btn" onClick={() => { logRef.current = []; setLogs([]); }}>清空日志</button>
     </div>
-  );
+    <div style={{ position: "absolute", right: 12, top: 12, bottom: 12, zIndex: 30, width: 280, overflow: "auto", padding: 10, background: "rgba(8,14,12,.9)", border: "1px solid rgba(77,224,139,.3)", color: "#cdeee0", fontSize: 12 }}>
+      {logs.map((line, index) => <div key={`${index}-${line}`}>#{index + 1} {line}</div>)}
+    </div>
+  </div>;
 }
 
-export default function render(
-  container: HTMLElement,
-  options: RenderOptions
-): () => void {
+export default function render(container: HTMLElement, options: RenderOptions): () => void {
   styleHost(container);
   if (!options.token) {
     const clean = renderNoTokenPanel(container, "useMap 事件监听");
@@ -209,9 +84,6 @@ export default function render(
     };
   }
   const root = createRoot(container);
-  root.render(<Demo token={options.token!} />);
-  return () => {
-    root.unmount();
-    container.innerHTML = "";
-  };
+  root.render(<Demo token={options.token} />);
+  return () => root.unmount();
 }

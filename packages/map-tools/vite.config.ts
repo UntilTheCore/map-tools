@@ -1,24 +1,74 @@
 import { fileURLToPath, URL } from "node:url";
-import { readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
-const __dirname = fileURLToPath(new URL(".", import.meta.url));
+function writePublicTypeEntry(file: string, reference: string): void {
+  const target = fileURLToPath(new URL(`./dist/types/${file}`, import.meta.url));
+  writeFileSync(
+    target,
+    `/// <reference path="${reference}" />\n\nexport {};\n`,
+  );
+}
+
+function getDeclarationFiles(directory: string): string[] {
+  return readdirSync(directory).flatMap((entry) => {
+    const path = join(directory, entry);
+    if (statSync(path).isDirectory()) return getDeclarationFiles(path);
+    return path.endsWith(".d.ts") ? [path] : [];
+  });
+}
+
+function toNodeNextSpecifier(
+  declarationFile: string,
+  specifier: string,
+): string {
+  if (
+    !specifier.startsWith(".") ||
+    /\.(?:[cm]?[jt]sx?|json|d\.ts)$/u.test(specifier)
+  ) {
+    return specifier;
+  }
+
+  const resolved = resolve(dirname(declarationFile), specifier);
+  if (existsSync(`${resolved}.d.ts`)) return `${specifier}.js`;
+  if (existsSync(join(resolved, "index.d.ts"))) {
+    return `${specifier.replace(/\/$/u, "")}/index.js`;
+  }
+  return specifier;
+}
 
 /**
- * 为指定产物 d.ts 文件顶部补充 minemap 全局类型引用。
- * ts-morph 打印声明时不保留源文件中的三斜线 reference,这里构建后补上,
- * 保证消费者拿到声明产物时 minemap.Map / MapLayer / MapSource 等全局类型可解析。
- * 基准目录基于 import.meta.url(配置文件所在目录),与执行构建时的 cwd 无关。
- * @param file - 相对 dist/types 的文件路径
- * @param ref - reference 的相对路径(相对该文件所在目录)
+ * vite-plugin-dts preserves TypeScript's extensionless relative specifiers.
+ * They work with moduleResolution: bundler, but fail in published packages
+ * consumed through NodeNext. Keep the declaration graph NodeNext-compatible.
  */
-function prependMinemapReference(file: string, ref: string) {
-    const target = fileURLToPath(new URL(`./dist/types/${file}`, import.meta.url));
-    const content = readFileSync(target, "utf8");
-    if (!content.includes("minemap.d.ts")) {
-        writeFileSync(target, `/// <reference path="${ref}" />\n\n${content}`);
-    }
+function rewriteDeclarationSpecifiersForNodeNext(): void {
+  const typesDirectory = fileURLToPath(
+    new URL("./dist/types/", import.meta.url),
+  );
+  for (const declarationFile of getDeclarationFiles(typesDirectory)) {
+    const source = readFileSync(declarationFile, "utf8");
+    const rewritten = source
+      .replace(
+        /\bfrom\s+(["'])(\.{1,2}\/[^'"]*?)\1/gu,
+        (match, quote: string, specifier: string) =>
+          match.replace(specifier, toNodeNextSpecifier(declarationFile, specifier)),
+      )
+      .replace(
+        /\bimport\(\s*(["'])(\.{1,2}\/[^'"]*?)\1\s*\)/gu,
+        (match, quote: string, specifier: string) =>
+          match.replace(specifier, toNodeNextSpecifier(declarationFile, specifier)),
+      );
+    if (rewritten !== source) writeFileSync(declarationFile, rewritten);
+  }
 }
 
 /**
@@ -42,6 +92,14 @@ export default defineConfig({
         vue2: "src/vue2/index.ts",
         vue3: "src/vue3/index.ts",
         react: "src/react/index.ts",
+        resources: "src/resources.ts",
+        layers: "src/layers.ts",
+        query: "src/query.ts",
+        viewport: "src/viewport.ts",
+        geometry: "src/geometry.ts",
+        overlays: "src/overlays.ts",
+        popup: "src/popup.ts",
+        events: "src/events.ts",
       },
       formats: ["es", "cjs"],
       fileName: (format, entryName) =>
@@ -59,12 +117,9 @@ export default defineConfig({
       include: ["src"],
       copyDtsFiles: true,
       afterBuild: () => {
-        prependMinemapReference("index.d.ts", "./types/minemap.d.ts");
-        prependMinemapReference("core/index.d.ts", "../types/minemap.d.ts");
-        prependMinemapReference("vue/index.d.ts", "../types/minemap.d.ts");
-        prependMinemapReference("vue2/index.d.ts", "../types/minemap.d.ts");
-        prependMinemapReference("vue3/index.d.ts", "../types/minemap.d.ts");
-        prependMinemapReference("react/index.d.ts", "../types/minemap.d.ts");
+        writePublicTypeEntry("minemap.d.ts", "./types/minemap.d.ts");
+        writePublicTypeEntry("umd.d.ts", "./types/umd.d.ts");
+        rewriteDeclarationSpecifiersForNodeNext();
       },
     }),
   ],

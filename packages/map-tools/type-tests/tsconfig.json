@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ym/map-tools": ["../dist/types/index.d.ts"],
+      "@ym/map-tools/resources": ["../dist/types/resources.d.ts"],
+      "@ym/map-tools/layers": ["../dist/types/layers.d.ts"],
+      "@ym/map-tools/query": ["../dist/types/query.d.ts"],
+      "@ym/map-tools/viewport": ["../dist/types/viewport.d.ts"],
+      "@ym/map-tools/geometry": ["../dist/types/geometry.d.ts"],
+      "@ym/map-tools/overlays": ["../dist/types/overlays.d.ts"],
+      "@ym/map-tools/popup": ["../dist/types/popup.d.ts"],
+      "@ym/map-tools/minemap": ["../dist/types/minemap.d.ts"],
+      "@ym/map-tools/umd": ["../dist/types/umd.d.ts"]
+    }
+  },
+  "include": [
+    "module-consumer.ts",
+    "minemap-global-consumer.ts",
+    "umd-consumer.ts",
+    "source-narrowing.ts",
+    "layer-types.ts",
+    "geometry-types.ts",
+    "vue-consumer.ts",
+    "react-consumer.ts"
+  ]
+}
