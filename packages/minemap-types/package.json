@@ -1,0 +1,31 @@
+{
+  "name": "@ym/minemap-types",
+  "version": "0.1.0",
+  "description": "minemap JS SDK 全局 TypeScript 类型声明（社区维护，非官方包）",
+  "author": "ly",
+  "license": "MIT",
+  "type": "module",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.d.ts",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.d.ts",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@types/geojson": "*"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "typescript": "^5.9.2"
+  },
+  "publishConfig": {
+    "registry": "http://192.168.3.180:4873/",
+    "access": "public"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
