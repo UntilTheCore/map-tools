@@ -85,6 +85,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
+    "@ym/minemap-types": "workspace:^",
     "@turf/turf": "^6.5.0",
     "@types/geojson": "^7946.0.16",
     "vue-demi": "^0.14.10"
