@@ -1,2 +1,5 @@
-// vue2 子路径入口:与 vue3 共用同一套 vue-demi 实现,由 vue-demi 根据安装的 vue 版本自动切换
-export * from "../vue";
+// vue2 子路径入口：复用共用的 useMap（src/vue/useMap.ts），
+// 弹窗挂载走 Vue 2.7 适配版（本目录 popup.ts，无原生 createApp）。
+export * from "../vue/useMap";
+export * from "./popup";
+export type { MapLike } from "../types/public";

@@ -8,7 +8,7 @@ pnpm monorepo，核心产物为 **@ym/map-tools**——基于 `@turf/turf` 与 m
 
 ```
 map-tools/                            # map-tools-monorepo（private，packageManager: pnpm@11.15.1）
-├── pnpm-workspace.yaml               # packages: ['packages/*']；allowBuilds: esbuild / vue-demi
+├── pnpm-workspace.yaml               # packages: ['packages/*']；allowBuilds: esbuild
 ├── .npmrc                            # @ym:registry=http://192.168.3.180:4873/
 ├── package.json                      # 根脚本：build / build:all / dev:docs / typecheck
 ├── docs/adr/                         # 架构决策记录（0001：minemap 类型独立成包）
@@ -117,9 +117,9 @@ src/
 │   ├── pointTool.ts / lineTool.ts / polygonTool.ts
 │   ├── popupTool.ts      # 弹窗核心（挂载注入模式，见 4.4）
 │   └── types.ts
-├── vue/                  # vue-demi 实现（vue2 与 vue3 共用）：useMap.ts + popup.ts
-├── vue2/index.ts         # 薄壳入口：export * from "../vue"
-├── vue3/index.ts         # 薄壳入口：export * from "../vue"
+├── vue/                  # Vue 共用实现（直接依赖 vue，Vue3 语义）：useMap.ts + popup.ts（Vue3 弹窗）
+├── vue2/                 # Vue 2.7 入口：useMap 复用 ../vue/useMap + 本目录 popup.ts（new Vue 挂载）
+├── vue3/                 # Vue 3 入口：export * from "../vue"（useMap + Vue3 popup）
 ├── react/                # useMap.ts（React Hook）+ popup.ts（createRoot 挂载）
 └── types/minemap.d.ts    # 薄入口：import type {} from "@ym/minemap-types"（SDK 声明已迁至独立包）
 ```
@@ -129,8 +129,8 @@ src/
 | 导入路径                | 说明                                                                           |
 | ----------------------- | ------------------------------------------------------------------------------ |
 | `@ym/map-tools`         | 框架无关核心（全部 core API）                                                  |
-| `@ym/map-tools/vue2`    | Vue 2（2.7+）适配，导出 `getPopupDom`、`useMap`                                |
-| `@ym/map-tools/vue3`    | Vue 3 适配，与 vue2 共用同一套 vue-demi 实现                                   |
+| `@ym/map-tools/vue2`    | Vue 2.7+ 适配，导出 `createPopupDom`、`useMap`（弹窗走 new Vue 挂载）          |
+| `@ym/map-tools/vue3`    | Vue 3 适配，导出 `createPopupDom`、`useMap`（弹窗走原生 createApp）            |
 | `@ym/map-tools/react`   | React 18+ 适配，导出 `getPopupDom`、`useMap`                                   |
 | `@ym/map-tools/minemap` | 薄入口子路径，激活 `@ym/minemap-types` 的 SDK 全局声明（types-only，无运行时） |
 | `@ym/map-tools/umd`     | UMD 产物 `dist/umd/index.umd.js`，全局名 `FE_utils`                            |
@@ -138,18 +138,22 @@ src/
 - `exports` 各子路径（`.` / `vue2` / `vue3` / `react`）均声明 `types` / `import` / `require` 三条件分支；`./umd` 为单字符串，直连 `dist/umd/index.umd.js`
 - `main`/`module`/`unpkg`/`jsdelivr` 字段已配置，`files` 仅发布 `dist`
 
-### 4.3 vue-demi 机制
+### 4.3 Vue 2/3 适配机制
 
-- `src/vue2/index.ts` 与 `src/vue3/index.ts` 是内容相同的薄壳，均 `export * from "../vue"`
-- 实际行为差异完全由 **vue-demi** 决定：消费者安装 vue2（>=2.7）时 vue-demi 切至 v2.7 实现，安装 vue3 时切至 v3 实现
-- vue-demi 是 `dependencies` 且在构建中**必须 external**（消费者侧自动切换）
+- 已移除 vue-demi（官方不再维护）。Vue 适配层**直接依赖消费者提供的 `vue`**，最低 Vue 2.7（原生组合式 API）
+- `src/vue/useMap.ts` 用 Vue 2.7 与 Vue 3 签名一致的组合式 API（`shallowRef`/`markRaw`/`onUnmounted`/`Ref`），vue2、vue3 入口**共用**同一份实现
+- 唯一差异点在弹窗挂载：`createApp` 是 Vue 3 专属，Vue 2.7 无原生 `createApp`，故
+  - `src/vue/popup.ts`：Vue 3 版 `createPopupDom`，`createApp({ render }).mount()`
+  - `src/vue2/popup.ts`：Vue 2.7 版 `createPopupDom`，`new Vue({ render }).$mount()` 后 `appendChild` 进容器（Vue2 `$mount` 替换而非写入容器，弹窗约定内容须放进返回的 `element`）
+- `src/vue3/index.ts` 是 `export * from "../vue"` 薄壳；`src/vue2/index.ts` 复用 `../vue/useMap` + 本目录 `popup`，非纯薄壳
 - 兼容范围：Vue 2.7+；React 18+；`peerDependencies`（vue / react / react-dom）**全部 optional**，不装未用框架不报错
 
 ### 4.4 popup 挂载注入模式
 
-- [core/popupTool.ts](packages/map-tools/src/core/popupTool.ts) 提供框架无关的 `getPopupDom(element, opts, renderer)`，接收注入的渲染回调
-- 框架适配层传入 renderer：
-  - vue 版：经 vue-demi 渲染组件至容器
+- [core/popup/dom.ts](packages/map-tools/src/core/popup/dom.ts) 提供框架无关的 `createPopupDom(content, mount)`，接收注入的挂载回调 `mount(container, content) => cleanup`
+- 框架适配层传入 mount 回调：
+  - vue3 版：`createApp(...).mount()`（见 [vue/popup.ts](packages/map-tools/src/vue/popup.ts)）
+  - vue2 版：`new Vue({ render }).$mount()` 后 appendChild 进容器（见 [vue2/popup.ts](packages/map-tools/src/vue2/popup.ts)）
   - react 版：`createRoot(container).render(el)`（见 [react/popup.ts](packages/map-tools/src/react/popup.ts)）
 - 新增框架适配时复用该注入模式，不要在 core 中引入框架代码
 
@@ -161,7 +165,7 @@ src/
 ### 4.6 类型生成
 
 - 主构建 [vite.config.ts](packages/map-tools/vite.config.ts)：四入口（index/vue2/vue3/react），es + cjs 输出至 `dist/`
-- `external`：`vue`、`vue-demi`、`react`、`react-dom`（含子路径）；`@turf/turf` 保持**内联**，不得加入 external
+- `external`：`vue`、`react`、`react-dom`（含子路径）；`@turf/turf` 保持**内联**，不得加入 external
 - `vite-plugin-dts` 产出类型至 `dist/types`（`copyDtsFiles: true` 原样拷贝 `src/types/*.d.ts`，含薄入口）；构建后 `writePublicTypeEntry` 生成 `dist/types/minemap.d.ts`、`dist/types/umd.d.ts` 两个 `/// <reference path>` 跳板（对应 `exports["./minemap"]`、`exports["./umd"]` 的 types 入口），`rewriteDeclarationSpecifiersForNodeNext` 把相对 specifier 补 `.js` 后缀以兼容 NodeNext 消费者；裸包名 specifier（如 `@ym/minemap-types`）不改写
 - minemap SDK 全局类型由独立包 `@ym/minemap-types` 提供并经 map-tools `dependencies` 自动传递，消费者无需手动安装（但需显式激活，见 4.7）
 
@@ -179,7 +183,7 @@ src/
 - VitePress 1.x；四框架 Tab（vue3/vue2/react/html）+ iframe 预览 + 源码面板
 - `examples/` 使用**双 Vite 配置**构建：
   - [vite.demos.config.ts](packages/docs-preview/examples/vite.demos.config.ts)：三入口 vue3.html / react.html / plain.html → `../public/demos`（`base: './'`，`emptyOutDir: true`，publicDir 为 examples/public）
-  - [vite.demos.vue2.config.ts](packages/docs-preview/examples/vite.demos.vue2.config.ts)：仅 vue2.html（`emptyOutDir: false` 避免覆盖主构建产物）；alias `vue → vue2`（`npm:vue@2.7.16` 别名包）、`vue-demi → vue-demi/lib/v2.7/index.mjs`
+  - [vite.demos.vue2.config.ts](packages/docs-preview/examples/vite.demos.vue2.config.ts)：仅 vue2.html（`emptyOutDir: false` 避免覆盖主构建产物）；alias `vue → Vue 2.7 运行时绝对路径`（`npm:vue@2.7.16`，用 `createRequire.resolve("vue2")` 取绝对路径，因 map-tools 产物软链解析、裸 `vue2` 在其上下文不可解析）
 - 示例注册表 [examples/src/registry.ts](packages/docs-preview/examples/src/registry.ts)：`registry`（id → ExampleMeta{title, description, apis}）+ `exampleOrder` + `getExampleMeta`
 - 四框架实现放 `examples/src/{vue3,vue2,react,html}/{id}.ts`，统一导出 `render(container, options) => 清理函数`；四个入口文件位于 `examples/src/entries/`
 - [scripts/copy-umd.mjs](packages/docs-preview/scripts/copy-umd.mjs)：将 UMD 产物复制为 `examples/public/vendor/fe-utils.umd.js`，供 plain.html 通过 `<script>` 加载全局 `FE_utils`
@@ -217,12 +221,12 @@ src/
 ## 7. 注意事项与禁忌
 
 - **禁改 UMD 全局名 `FE_utils`**（[vite.umd.config.ts](packages/map-tools/vite.umd.config.ts) 中 `lib.name`）；docs-preview、技能文档与下游用户均依赖该全局名
-- **禁止在库源码（packages/map-tools/src）使用 .vue SFC**：一律使用渲染函数（vue-demi）/ createElement
+- **禁止在库源码（packages/map-tools/src）使用 .vue SFC**：一律使用渲染函数（h / render）/ createElement
 - **minemap 全局类型必须保持全局命名空间声明形态**（`namespace minemap` + `declare global`，位于 `packages/minemap-types`），勿改为模块导出，否则消费者类型解析失效；类型包**禁止反向依赖** `@ym/map-tools`（依赖方向单向，见 ADR 0001）；修改 SDK 全局类型只改 `packages/minemap-types/index.d.ts`，勿在 map-tools 源码树内加声明
-- **双构建配置勿合并**：vue2 demos 需要独立 alias（vue → vue2、vue-demi → v2.7 实现），合并单配置会导致 vue-demi 版本冲突
-- **勿删 `pnpm-workspace.yaml` 的 `allowBuilds`**（esbuild、vue-demi 依赖构建脚本权限）
-- **external 边界**：`@turf/turf` 必须内联；`vue`/`vue-demi`/`react`/`react-dom` 必须 external（vue-demi external 是 vue2/vue3 自动切换的前提）
-- **vue2/vue3 子路径入口保持薄壳**（仅 `export * from "../vue"`），勿写入差异化逻辑
+- **双构建配置勿合并**：vue2 demos 需要独立 alias（`vue` → Vue 2.7 运行时绝对路径），主 demos 走 Vue 3；合并单配置会让 `vue` 无法同时解析到两个版本
+- **勿删 `pnpm-workspace.yaml` 的 `allowBuilds`**（esbuild 依赖构建脚本权限）
+- **external 边界**：`@turf/turf` 必须内联；`vue`/`react`/`react-dom` 必须 external（Vue 适配层直接依赖消费者提供的 `vue`，vue2 走 2.7、vue3 走 3）
+- **vue3 入口保持薄壳**（仅 `export * from "../vue"`）；**vue2 入口**复用 `../vue/useMap` 但自带 `popup.ts`（Vue 2.7 `new Vue` 挂载，因无原生 `createApp`），此差异不可再合并
 - **Windows 下跨目录复制一律用 Node 脚本**（`node:path`），参照 copy-umd.mjs；勿用 shell 的 `cp`/`copy` 硬编码路径
 - **勿删/勿改根 .npmrc 的 `@ym` scope 指向**（私仓 `http://192.168.3.180:4873/`）
 - **peerDependencies（vue/react/react-dom）保持 optional**，避免强制消费者安装未用框架

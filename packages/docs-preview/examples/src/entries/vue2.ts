@@ -1,7 +1,6 @@
 /**
  * vue2.html 入口：按 ?ex= 参数动态加载 src/vue2/{id}.ts 并渲染。
- * 注意：该入口由 vite.demos.vue2.config.ts 单独构建
- * （alias: vue -> vue2, vue-demi -> vue-demi/lib/v2.7/index.mjs）。
+ * 注意：该入口由 vite.demos.vue2.config.ts 单独构建（alias: vue -> Vue 2.7 运行时绝对路径）。
  */
 import "../shared/demo.css";
 import type { ExampleRender } from "../shared/demo";

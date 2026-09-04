@@ -1,5 +1,5 @@
-import { markRaw, onUnmounted, shallowRef } from "vue-demi";
-import type { Ref } from "vue-demi";
+import { markRaw, onUnmounted, shallowRef } from "vue";
+import type { Ref } from "vue";
 import {
   createMapEventController,
   type MapEventController,
