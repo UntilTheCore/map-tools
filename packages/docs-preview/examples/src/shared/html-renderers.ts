@@ -183,7 +183,7 @@ export const renderPbfLayer: ExampleRender = (container, options) => {
   };
   const addVector = () => {
     if (!map) return;
-    FE_utils.replaceVectorSource(map, { sourceId: source, tiles, layers: [vectorLayer] });
+    FE_utils.replaceVectorSource(map, { id: source, tiles, layers: [vectorLayer] });
     status.info("vector source 已替换");
   };
   const read = () => {

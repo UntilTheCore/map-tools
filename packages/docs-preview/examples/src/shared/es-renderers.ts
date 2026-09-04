@@ -243,7 +243,7 @@ export const renderPbfLayer: ExampleRender = (container, options) => {
       status.error("地图尚未初始化完成");
       return;
     }
-    replaceVectorSource(map, { sourceId, tiles, layers: [layer] });
+    replaceVectorSource(map, { id: sourceId, tiles, layers: [layer] });
     status.info(`已提交 ${layerId}`);
   };
   const readFeatures = () => {
