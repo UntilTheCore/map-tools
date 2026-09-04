@@ -26,13 +26,13 @@ pnpm add @ym/map-tools
 <script src="https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js"></script>
 ```
 
-SDK 没有官方 npm 类型包。CDN Script 用户在 TypeScript 中显式启用补充声明：
+SDK 没有官方 npm 类型包；类型由独立包 `@ym/minemap-types` 提供（经 `@ym/map-tools` 的 dependencies 自动传递，无需单独安装）。CDN Script 用户在 TypeScript 中显式启用补充声明：
 
 ```ts
 /// <reference types="@ym/map-tools/minemap" />
 ```
 
-这是由插件依据已使用 minemap v3.0.0 API 维护的经验型声明；未确认字段使用 `unknown`，不得依赖 SDK 私有字段如 `_data`。
+不使用 `@ym/map-tools`、只加载 minemap SDK 的项目，可直接安装并激活类型包：`/// <reference types="@ym/minemap-types" />`（或 tsconfig `"types": ["@ym/minemap-types"]`）。声明覆盖 `minemap` / `minemaputil` / `minemap.edit` / `minemap.lbsUtil`，是依据官方 skill 参考文档与 minemap v3.0.0 实际使用维护的经验型声明（唯一定义源在 monorepo `packages/minemap-types`）；未确认字段使用 `unknown`，不得依赖 SDK 私有字段如 `_data`。
 
 ## 入口
 

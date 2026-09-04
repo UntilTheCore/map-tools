@@ -11,20 +11,23 @@ map-tools/                            # map-tools-monorepo（private，packageMa
 ├── pnpm-workspace.yaml               # packages: ['packages/*']；allowBuilds: esbuild / vue-demi
 ├── .npmrc                            # @ym:registry=http://192.168.3.180:4873/
 ├── package.json                      # 根脚本：build / build:all / dev:docs / typecheck
+├── docs/adr/                         # 架构决策记录（0001：minemap 类型独立成包）
 ├── tsconfig.base.json
 └── packages/
-    ├── map-tools/                    # @ym/map-tools v2.0.1，插件工具库（Vite 库模式）
+    ├── map-tools/                    # @ym/map-tools v3.0.0，插件工具库（Vite 库模式）
+    ├── minemap-types/                # @ym/minemap-types v0.1.0，minemap SDK 全局类型（纯 .d.ts，无构建）
     ├── skills/                       # map-tools-skills（Qoder 技能包，private）
     └── docs-preview/                 # VitePress 1.x 文档站 + 四框架示例中心（private）
 ```
 
 > 注：根级 `src/`、`lib/` 为历史同步产物，已删除（不再存在）；源码只认 `packages/` 下的文件。
 
-| 子项目                | 包名             | 版本  | 职责                                                                                  |
-| --------------------- | ---------------- | ----- | ------------------------------------------------------------------------------------- |
-| packages/map-tools    | @ym/map-tools    | 2.0.1 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                        |
-| packages/skills       | map-tools-skills | 0.1.0 | Qoder 技能包，`packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）     |
-| packages/docs-preview | docs-preview     | 1.0.0 | VitePress 文档站 + 示例中心（vue3/vue2/react/html 四框架 Tab、iframe 预览、源码面板） |
+| 子项目                 | 包名              | 版本  | 职责                                                                                  |
+| ---------------------- | ----------------- | ----- | ------------------------------------------------------------------------------------- |
+| packages/map-tools     | @ym/map-tools     | 3.0.0 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                        |
+| packages/minemap-types | @ym/minemap-types | 0.1.0 | minemap SDK / minemaputil / minemap.edit 全局类型声明（唯一数据源，见 ADR 0001）      |
+| packages/skills        | map-tools-skills  | 0.1.0 | Qoder 技能包，`packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）     |
+| packages/docs-preview  | docs-preview      | 1.0.0 | VitePress 文档站 + 示例中心（vue3/vue2/react/html 四框架 Tab、iframe 预览、源码面板） |
 
 ## 2. 环境要求
 
@@ -58,8 +61,10 @@ pnpm build:all                          # map-tools build + docs-preview build�
 **类型检查**
 
 ```bash
-pnpm typecheck                          # 递归执行 pnpm -r typecheck
+pnpm typecheck                          # 递归执行 pnpm -r typecheck（含 map-tools 与 minemap-types）
 pnpm --filter @ym/map-tools typecheck   # 单包 tsc --noEmit
+pnpm --filter @ym/minemap-types typecheck  # 类型包自身 + test/consumer 冒烟（tsc --noEmit）
+pnpm --filter @ym/map-tools typecheck:types  # build 后跑 type-tests 四组（含直接消费 @ym/minemap-types、no-global 回归）
 ```
 
 **Lint 与格式化**
@@ -116,18 +121,19 @@ src/
 ├── vue2/index.ts         # 薄壳入口：export * from "../vue"
 ├── vue3/index.ts         # 薄壳入口：export * from "../vue"
 ├── react/                # useMap.ts（React Hook）+ popup.ts（createRoot 挂载）
-└── types/minemap.d.ts    # minemap SDK 本地类型声明（全局）
+└── types/minemap.d.ts    # 薄入口：import type {} from "@ym/minemap-types"（SDK 声明已迁至独立包）
 ```
 
 ### 4.2 四入口与 exports 子路径
 
-| 导入路径              | 说明                                                |
-| --------------------- | --------------------------------------------------- |
-| `@ym/map-tools`       | 框架无关核心（全部 core API）                       |
-| `@ym/map-tools/vue2`  | Vue 2（2.7+）适配，导出 `getPopupDom`、`useMap`     |
-| `@ym/map-tools/vue3`  | Vue 3 适配，与 vue2 共用同一套 vue-demi 实现        |
-| `@ym/map-tools/react` | React 18+ 适配，导出 `getPopupDom`、`useMap`        |
-| `@ym/map-tools/umd`   | UMD 产物 `dist/umd/index.umd.js`，全局名 `FE_utils` |
+| 导入路径                | 说明                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| `@ym/map-tools`         | 框架无关核心（全部 core API）                                                  |
+| `@ym/map-tools/vue2`    | Vue 2（2.7+）适配，导出 `getPopupDom`、`useMap`                                |
+| `@ym/map-tools/vue3`    | Vue 3 适配，与 vue2 共用同一套 vue-demi 实现                                   |
+| `@ym/map-tools/react`   | React 18+ 适配，导出 `getPopupDom`、`useMap`                                   |
+| `@ym/map-tools/minemap` | 薄入口子路径，激活 `@ym/minemap-types` 的 SDK 全局声明（types-only，无运行时） |
+| `@ym/map-tools/umd`     | UMD 产物 `dist/umd/index.umd.js`，全局名 `FE_utils`                            |
 
 - `exports` 各子路径（`.` / `vue2` / `vue3` / `react`）均声明 `types` / `import` / `require` 三条件分支；`./umd` 为单字符串，直连 `dist/umd/index.umd.js`
 - `main`/`module`/`unpkg`/`jsdelivr` 字段已配置，`files` 仅发布 `dist`
@@ -150,14 +156,14 @@ src/
 ### 4.5 UMD 构建
 
 - 独立配置 [vite.umd.config.ts](packages/map-tools/vite.umd.config.ts)：entry `src/index.ts`、全局名 `FE_utils`、`formats: ['umd']`、自包含（`external: []`）、`minify: true`（esbuild 压缩）
-- 输出 `dist/umd/index.umd.js`（约 58KB，gzip 后约 15KB），同时由 `umdCommonjsFlag` 插件产出 `dist/umd/package.json`（`{"type":"commonjs"}`），保证 `require` 走 CommonJS 分支
+- 输出 `dist/umd/index.umd.js`（约 13KB，gzip 后约 4.3KB），同时由 `umdCommonjsFlag` 插件产出 `dist/umd/package.json`（`{"type":"commonjs"}`），保证 `require` 走 CommonJS 分支
 
 ### 4.6 类型生成
 
 - 主构建 [vite.config.ts](packages/map-tools/vite.config.ts)：四入口（index/vue2/vue3/react），es + cjs 输出至 `dist/`
 - `external`：`vue`、`vue-demi`、`react`、`react-dom`（含子路径）；`@turf/turf` 保持**内联**，不得加入 external
-- `vite-plugin-dts` 产出类型至 `dist/types`；构建后处理 `prependMinemapReference` 会向 index/core/vue/vue2/vue3/react 各 d.ts 顶部补 `/// <reference path=".../minemap.d.ts" />`（ts-morph 打印时不保留三斜线 reference，须事后补齐）
-- 消费者无需安装任何 minemap 类型包
+- `vite-plugin-dts` 产出类型至 `dist/types`（`copyDtsFiles: true` 原样拷贝 `src/types/*.d.ts`，含薄入口）；构建后 `writePublicTypeEntry` 生成 `dist/types/minemap.d.ts`、`dist/types/umd.d.ts` 两个 `/// <reference path>` 跳板（对应 `exports["./minemap"]`、`exports["./umd"]` 的 types 入口），`rewriteDeclarationSpecifiersForNodeNext` 把相对 specifier 补 `.js` 后缀以兼容 NodeNext 消费者；裸包名 specifier（如 `@ym/minemap-types`）不改写
+- minemap SDK 全局类型由独立包 `@ym/minemap-types` 提供并经 map-tools `dependencies` 自动传递，消费者无需手动安装（但需显式激活，见 4.7）
 
 ### 4.7 minemap 外部依赖约定
 
@@ -165,7 +171,7 @@ src/
   - JS 主 CDN（实测 200）：`https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js`
   - JS 备 CDN（实测 200，内容相同）：`https://minedata.cn/minemapapi/v3.0.0/minemap.js`
   - CSS：`https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.css`
-- 类型由本地声明 [src/types/minemap.d.ts](packages/map-tools/src/types/minemap.d.ts) 提供：`declare namespace minemap`（Map/Popup/Marker/Template 等）+ 全局 `declare type`（MapSource / MapLayer / LayerType）
+- SDK 类型由独立包 **@ym/minemap-types** 提供（`packages/minemap-types/index.d.ts`，自包含单文件，禁止反向引用 `@ym/map-tools`）：`namespace minemap`（Map/Popup/Marker/LngLat/控件/事件等）+ `minemaputil` + `minemap.edit` + `minemap.lbsUtil`；map-tools 的 `src/types/minemap.d.ts` 仅为薄入口（`import type {} from "@ym/minemap-types"`），`@ym/map-tools/minemap` 子路径与 `/// <reference types="@ym/map-tools/minemap" />` 均经此链激活（实测：reference types 指令支持带 scope 的包解析，非仅限 `node_modules/@types/`）
 - docs-preview 示例中心使用 [examples/src/shared/loadMinemap.ts](packages/docs-preview/examples/src/shared/loadMinemap.ts) 动态加载器（主/备 CDN 自动切换、promise 化；token 获取顺序：URL `?token=` → localStorage `MINEMAP_TOKEN`）
 
 ### 4.8 docs-preview 示例中心
@@ -199,18 +205,20 @@ src/
 
 1. 确认改动已通过第 5 节全部构建校验
 2. 首次发布前登录私仓：`npm login --registry http://192.168.3.180:4873`
-3. 更新 `packages/map-tools/package.json` 的 `version`
-4. 在 `packages/map-tools` 目录执行 `pnpm publish:pkg`（`prepublishOnly` 自动执行 `pnpm build`，`--no-git-checks` 允许工作区未提交状态发布）
-5. 版本策略：
+3. **发布顺序硬约束：先发类型包，再发 map-tools**（map-tools 的 d.ts 引用 `@ym/minemap-types`，前者未发布则消费者类型解析失败）：
+   - `pnpm --filter @ym/minemap-types publish --registry http://192.168.3.180:4873/ --no-git-checks`（纯声明包，无 prepublishOnly 构建；发布前跑 `pnpm --filter @ym/minemap-types typecheck`）
+   - 更新 `packages/map-tools/package.json` 的 `version`，在 `packages/map-tools` 目录执行 `pnpm publish:pkg`（`prepublishOnly` 自动执行 `pnpm build`，`--no-git-checks` 允许工作区未提交状态发布）
+4. 版本策略：
    - 破坏性变更（移除/修改 API 签名，如已移除的 `getLineEndpoint`）→ 升级 **major**
    - 新增能力 → **minor**；修复/文档 → **patch**
    - 弃用 API 先标 `@deprecated` 保留一版再移除（参考 `hiddenLayer`/`hiddenLayers` → `hideLayer`/`hideLayers`）
+   - `@ym/minemap-types` 独立 semver（不与 map-tools 联动）；`0.x` 表示未经 SDK 运行时逐项验证，验证充分后升 `1.0.0`
 
 ## 7. 注意事项与禁忌
 
 - **禁改 UMD 全局名 `FE_utils`**（[vite.umd.config.ts](packages/map-tools/vite.umd.config.ts) 中 `lib.name`）；docs-preview、技能文档与下游用户均依赖该全局名
 - **禁止在库源码（packages/map-tools/src）使用 .vue SFC**：一律使用渲染函数（vue-demi）/ createElement
-- **minemap 类型必须保持全局声明**（`declare namespace minemap` + 全局 `declare type`），勿改为模块导出，否则消费者类型解析失效
+- **minemap 全局类型必须保持全局命名空间声明形态**（`namespace minemap` + `declare global`，位于 `packages/minemap-types`），勿改为模块导出，否则消费者类型解析失效；类型包**禁止反向依赖** `@ym/map-tools`（依赖方向单向，见 ADR 0001）；修改 SDK 全局类型只改 `packages/minemap-types/index.d.ts`，勿在 map-tools 源码树内加声明
 - **双构建配置勿合并**：vue2 demos 需要独立 alias（vue → vue2、vue-demi → v2.7 实现），合并单配置会导致 vue-demi 版本冲突
 - **勿删 `pnpm-workspace.yaml` 的 `allowBuilds`**（esbuild、vue-demi 依赖构建脚本权限）
 - **external 边界**：`@turf/turf` 必须内联；`vue`/`vue-demi`/`react`/`react-dom` 必须 external（vue-demi external 是 vue2/vue3 自动切换的前提）
