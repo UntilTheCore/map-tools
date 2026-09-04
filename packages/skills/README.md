@@ -1,17 +1,64 @@
 # map-tools-skills
 
-本子项目用于存放 Qoder 技能（Agent Skills），为 `@ym/map-tools` 地图工具库的 AI 辅助开发提供知识文档。纯文档包，零依赖、无构建脚本，不参与任何安装/发布流程。
+本子项目存放为 AI 辅助开发（Qoder Agent）提供的技能知识文档，覆盖两个知识域：**@ym/map-tools 工具库**（封装层）与 **MineMap JS SDK 全家桶**（底层引擎、工具库、编辑/标绘插件、LBS 服务插件）。纯文档包，零依赖、无构建脚本，不参与任何安装/发布流程。
 
-## 目录约定
+## 技能清单
+
+| 技能            | 目录                                   | frontmatter name  | 覆盖范围                                                                                                                                        |
+| --------------- | -------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| map-tools       | `map-tools/`                           | `map-tools`       | @ym/map-tools 安装、接入、API 速查、useMap、弹窗适配、minemap 前置依赖与示例                                                                    |
+| MineMap 总入口  | `minemap-jsapi-skill/`                 | `minemap`         | 任务路由：判断开发任务类型后引导到 4 个子技能，并收拢依赖顺序、命名空间、坐标格式、初始化时机等通用约定                                         |
+| ├ 核心库        | `minemap-jsapi-skill/minemap-2d-api/`  | `minemap-2d-api`  | `minemap` 命名空间：地图初始化、图层/数据源、Marker/Popup、控件、事件、要素查询、相机动画、自定义渲染（细节在 `references/`）                   |
+| ├ 2D 工具库     | `minemap-jsapi-skill/minemap-2d-util/` | `minemap-2d-util` | `minemaputil` 命名空间：RangingTool 测距测面积、fitBounds 视口适配、SpaceUtil 空间计算                                                          |
+| ├ 编辑/标绘插件 | `minemap-jsapi-skill/minemap-edit/`    | `minemap-edit`    | `minemap.edit` 命名空间：30+ 绘制模式、二次编辑、样式自定义、吸附/锁定、undo/redo                                                               |
+| └ LBS 服务插件  | `minemap-jsapi-skill/minemap-lbs/`     | `minemap-lbs`     | `minemap.service` / `minemap.component` / `minemap.lbsUtil`：路径规划、POI 搜索、地理编码、行政区域、轨迹处理、到达圈（参数表在 `references/`） |
+
+## 目录结构
 
 ```
 packages/skills/
-├── package.json      # 仅用于标识子项目，private，无 scripts 无依赖
-├── README.md         # 本文件
-└── map-tools/
-    └── SKILL.md      # map-tools 专用技能：安装、接入、API 速查、useMap、minemap 前置依赖与示例
+├── package.json                     # 仅用于标识子项目，private，无 scripts 无依赖
+├── README.md                        # 本文件
+├── map-tools/
+│   └── SKILL.md                     # 单技能：@ym/map-tools
+└── minemap-jsapi-skill/             # 技能族：MineMap JSAPI 全家桶
+    ├── SKILL.md                     # 总入口（name: minemap）：任务路由表 + 通用约定
+    ├── minemap-2d-api/
+    │   ├── SKILL.md                 # 子技能内再含任务路由表
+    │   └── references/              # 按主题拆分的细节文档（渐进加载）
+    │       ├── map-core.md          #   地图/相机/交互
+    │       ├── sources.md           #   数据源与图层
+    │       ├── marker.md / popup.md #   覆盖物
+    │       ├── controls.md          #   UI 控件
+    │       ├── events-handlers.md   #   事件与 Handler
+    │       ├── geometry.md          #   LngLat/LngLatBounds 几何
+    │       └── custom-render.md     #   自定义图层/图标
+    ├── minemap-2d-util/
+    │   └── SKILL.md
+    ├── minemap-edit/
+    │   └── SKILL.md
+    └── minemap-lbs/
+        ├── SKILL.md
+        └── references/
+            └── service-api.md       #   Service 22 个接口参数表
 ```
 
-- 每个技能一个子目录，目录名即技能名，技能文档固定命名为 `SKILL.md`。
-- `SKILL.md` 顶部必须包含 YAML frontmatter（`---` 包裹），至少包含 `name` 与 `description` 字段。
-- 文档中的 API 均以 `packages/map-tools/src/` 源码为准，新增/修改导出后应同步更新。
+## 目录约定
+
+支持两种组织形态：
+
+1. **单技能**：一个子目录即一个技能，目录名即技能名，技能文档固定命名为 `SKILL.md`（如 `map-tools/`）。
+2. **技能族**：父目录的 `SKILL.md` 作为**总入口**，只负责「任务判断 + 路由 + 通用约定」，不重复 API 细节；能力域拆为子目录，各自持有 `SKILL.md`（如 `minemap-jsapi-skill/`）。内容量大时在子技能下再建 `references/*.md`，按主题拆分供**渐进加载**——先读 `SKILL.md`，需要细节再读对应 reference。
+
+通用规则：
+
+- 每个 `SKILL.md` 顶部必须包含 YAML frontmatter（`---` 包裹），至少包含 `name` 与 `description` 字段。
+- `description` 是代理触发匹配的依据，须覆盖该技能的关键命名空间（如 `minemap` / `minemaputil` / `minemap.edit` / `minemap.service`）与中英文场景关键词，即使用户未明说技术名也能命中。
+- frontmatter `name` 是技能注册名，可与目录名不同（如目录 `minemap-jsapi-skill` 注册为 `minemap`）。
+- 技能族内各 `SKILL.md` 之间靠路由表互相引用，路径一律使用相对本文件的相对路径。
+
+## 内容来源与一致性
+
+- `map-tools/` 的 API 以 `packages/map-tools/src/` 源码为准，新增/修改导出后应同步更新。
+- `minemap-jsapi-skill/` 以 MineMap 官方文档与实测为准，资源地址统一指向私有部署 CDN `gmap.cqphx.cn:4443`（核心库 v2.1.x）；
+- 两者冲突时以源码/官方文档为权威，README 与本表仅做导航，不承载 API 细节。
