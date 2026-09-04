@@ -48,7 +48,7 @@ SDK 没有官方 npm 类型包；类型由独立包 `@ym/minemap-types` 提供�
 | Popup     | `@ym/map-tools/popup`     | 框架无关 `createPopupDom`                 |
 | Events    | `@ym/map-tools/events`    | `createMapEventController` 与统一事件类型 |
 | Vue 3     | `@ym/map-tools/vue3`      | `useMap`、Vue `createPopupDom`            |
-| Vue 2.7   | `@ym/map-tools/vue2`      | vue-demi 适配的同名 API                   |
+| Vue 2.7   | `@ym/map-tools/vue2`      | `useMap`、Vue 2.7 `createPopupDom`        |
 | React     | `@ym/map-tools/react`     | `useMap`、React `createPopupDom`          |
 | UMD 类型  | `@ym/map-tools/umd`       | `FE_utils` 与 minemap 全局声明            |
 

@@ -60,9 +60,6 @@ importers:
       vue:
         specifier: ^3.5.0
         version: 3.5.41(typescript@5.9.2)
-      vue-demi:
-        specifier: ^0.14.10
-        version: 0.14.10(vue@3.5.41(typescript@5.9.2))
       vue2:
         specifier: npm:vue@2.7.16
         version: vue@2.7.16
@@ -78,9 +75,6 @@ importers:
       '@ym/minemap-types':
         specifier: workspace:^
         version: link:../minemap-types
-      vue-demi:
-        specifier: ^0.14.10
-        version: 0.14.10(vue@3.5.41(typescript@5.9.2))
     devDependencies:
       '@types/react':
         specifier: ^19.2.18
@@ -2406,17 +2400,6 @@ packages:
 
   vscode-uri@3.1.0:
     resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
-
-  vue-demi@0.14.10:
-    resolution: {integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==}
-    engines: {node: '>=12'}
-    hasBin: true
-    peerDependencies:
-      '@vue/composition-api': ^1.0.0-rc.1
-      vue: ^3.0.0-0 || ^2.6.0
-    peerDependenciesMeta:
-      '@vue/composition-api':
-        optional: true
 
   vue-tsc@2.0.29:
     resolution: {integrity: sha512-MHhsfyxO3mYShZCGYNziSbc63x7cQ5g9kvijV7dRe1TTXBRLxXyL0FnXWpUF1xII2mJ86mwYpYsUmMwkmerq7Q==}
@@ -5164,10 +5147,6 @@ snapshots:
       - universal-cookie
 
   vscode-uri@3.1.0: {}
-
-  vue-demi@0.14.10(vue@3.5.41(typescript@5.9.2)):
-    dependencies:
-      vue: 3.5.41(typescript@5.9.2)
 
   vue-tsc@2.0.29(typescript@5.9.2):
     dependencies:

@@ -4,7 +4,7 @@
 pnpm add @ym/map-tools vue@2.7
 ```
 
-Vue 2.7 与 Vue 3 使用同一套 vue-demi 实现，但从不同子路径导入以表达项目版本：
+Vue 2.7 与 Vue 3 共用同一套组合式 API（`useMap`），弹窗挂载按版本适配（Vue 2.7 用 `new Vue`、Vue 3 用 `createApp`），从不同子路径导入以表达项目版本：
 
 ```ts
 import { createPopupDom, useMap } from "@ym/map-tools/vue2";
@@ -32,4 +32,4 @@ popup.setDOMContent(handle.element);
 handle.dispose();
 ```
 
-同一构建环境同时存在 Vue 2 与 Vue 3 时，Vue 2 打包配置仍需将 `vue` 和 `vue-demi` alias 到 v2.7 实现。
+同一构建环境同时存在 Vue 2 与 Vue 3 时，Vue 2 打包配置需将 `vue` alias 到 Vue 2.7 运行时（如本仓库 `vite.demos.vue2.config.ts`，用绝对路径指向 `npm:vue@2.7.16`）。

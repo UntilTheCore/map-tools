@@ -54,10 +54,10 @@ function rewriteDeclarationSpecifiersForNodeNext(): void {
 
 /**
  * 主构建需要 external 的框架包(含子路径,如 react-dom/client)。
- * vue-demi 是 dependency,由消费者侧根据 vue2/vue3 切换,必须 external;
+ * vue 适配层直接依赖消费者提供的 vue(vue2 入口走 2.7、vue3 入口走 3),必须 external;
  * @turf/turf 保持内联,不进该列表。
  */
-const EXTERNAL_PACKAGES = ["vue", "vue-demi", "react", "react-dom"];
+const EXTERNAL_PACKAGES = ["vue", "react", "react-dom"];
 
 const external = (id: string) =>
   EXTERNAL_PACKAGES.some((dep) => id === dep || id.startsWith(`${dep}/`));
