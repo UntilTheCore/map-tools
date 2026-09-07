@@ -1,6 +1,6 @@
 ---
 name: map-tools
-description: 使用 @ym/map-tools v3 开发 minemap（Minedata）地图应用，处理 GeoJSON/vector 资源、图层显隐、渲染要素查询、视野控制、Popup 生命周期、Vue2/Vue3/React useMap，以及 CDN Script 的 minemap 和 UMD 类型入口时使用。
+description: 使用 @ym/map-tools v3 开发 minemap地图应用，处理 GeoJSON/vector 资源、图层显隐、渲染要素查询、视野控制、Popup 生命周期、Vue2/Vue3/React useMap，以及 CDN Script 的 minemap 和 UMD 类型入口时使用。
 ---
 
 # @ym/map-tools v3
@@ -19,11 +19,24 @@ description: 使用 @ym/map-tools v3 开发 minemap（Minedata）地图应用，
 pnpm add @ym/map-tools
 ```
 
-页面先加载 minemap v3.0.0：
+index.html 页面先加载 minemap v2.1.0：
 
 ```html
-<link rel="stylesheet" href="https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.css" />
-<script src="https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js"></script>
+<!-- minemap 基础样式 css -->
+<link rel="stylesheet" href="https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.css" />
+<!-- minemap 的核心 js api-->
+<script src="https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.js"></script>
+<!-- 提供地图绘图和编辑特性 -->
+<script src="https://gmap.cqphx.cn:4443/minemapapi/minemap-plugins/edit/minemap-edit.js"></script>
+<!-- 提供地理位置计算相关的计算功能 -->
+<script src="https://gmap.cqphx.cn:4443/minemapapi/minemap-plugins/2d-util/minemap-util.js"></script>
+<script src="https://gmap.cqphx.cn:4443/minemapapi/minemap-plugins/lbs/v1/minemap-service.js"></script>
+<!-- 提供echarts 支持，地图内echarts效果必须使用提供的插件，不能自行安装依赖替换 -->
+<script src="https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/plugins/echarts/echarts.3.8.5.min.js"></script>
+<!-- template 插件中包含 echarts 的模块内容 -->
+<script src="https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/plugins/template/template.js"></script>
+<!-- 部分3D 效果需要此插件 -->
+<script src="https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/plugins/deckgl/deckgl.min.js"></script>
 ```
 
 SDK 没有官方 npm 类型包；类型由独立包 `@ym/minemap-types` 提供（经 `@ym/map-tools` 的 dependencies 自动传递，无需单独安装）。CDN Script 用户在 TypeScript 中显式启用补充声明：
@@ -32,7 +45,7 @@ SDK 没有官方 npm 类型包；类型由独立包 `@ym/minemap-types` 提供�
 /// <reference types="@ym/map-tools/minemap" />
 ```
 
-不使用 `@ym/map-tools`、只加载 minemap SDK 的项目，可直接安装并激活类型包：`/// <reference types="@ym/minemap-types" />`（或 tsconfig `"types": ["@ym/minemap-types"]`）。声明覆盖 `minemap` / `minemaputil` / `minemap.edit` / `minemap.lbsUtil`，是依据官方 skill 参考文档与 minemap v3.0.0 实际使用维护的经验型声明（唯一定义源在 monorepo `packages/minemap-types`）；未确认字段使用 `unknown`，不得依赖 SDK 私有字段如 `_data`。
+不使用 `@ym/map-tools`、只加载 minemap SDK 的项目，可直接安装并激活类型包：`/// <reference types="@ym/minemap-types" />`（或 tsconfig `"types": ["@ym/minemap-types"]`）。声明覆盖 `minemap` / `minemaputil` / `minemap.edit` / `minemap.lbsUtil`，是依据官方 skill 参考文档与 minemap v2.1.0 实际使用维护的经验型声明（唯一定义源在 monorepo `packages/minemap-types`）；未确认字段使用 `unknown`，不得依赖 SDK 私有字段如 `_data`。
 
 ## 入口
 
@@ -126,7 +139,7 @@ fitToFeatures(map, features, {
 ### Geometry 与覆盖物
 
 ```ts
-assertCoordinate([116.4, 39.9]);
+assertCoordinate([106.55, 29.56]);
 const bearing = getBearing(from, to);
 const endpoints = getLineEndpoints(lineFeatures);
 const removed = removeOverlays([marker, popup]);

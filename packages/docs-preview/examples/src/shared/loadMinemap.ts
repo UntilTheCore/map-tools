@@ -1,18 +1,17 @@
 /**
- * minemap（元图科技 Minedata）SDK 动态加载器。
+ * minemap SDK 动态加载器。
  *
  * - 无 npm 包，通过 CDN 动态注入 <script> 加载
- * - 主 CDN（已实测 200，v3.0.0）：https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js
- * - 备选 CDN（已实测 200，同内容）：https://minedata.cn/minemapapi/v3.0.0/minemap.js
- * - 任务候选 https://geoserver.minedata.cn/minemapapi/v3.0.0/minemap.js 实测不可达（fetch failed）
+ * - 私有部署单源（已实测 200）：https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.js
+ * - 示例默认参数：solution 222609、center [106.55, 29.56]（重庆）、
+ *   私有 MapStyleServer styleJSON（key 内嵌于 URL，见 createMinemapMap）
  *
  * token 获取顺序：URL ?token= -> localStorage MINEMAP_TOKEN
  */
 import type {} from "@ym/map-tools/minemap";
 
-export const MINEMAP_CDN_MAIN = "https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js";
-export const MINEMAP_CDN_FALLBACK = "https://minedata.cn/minemapapi/v3.0.0/minemap.js";
-export const MINEMAP_CSS = "https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.css";
+export const MINEMAP_CDN_MAIN = "https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.js";
+export const MINEMAP_CSS = "https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.css";
 
 export const TOKEN_STORAGE_KEY = "MINEMAP_TOKEN";
 
@@ -74,8 +73,8 @@ function injectCss(href: string) {
 }
 
 /**
- * 动态加载 minemap SDK（promise 化）。主 CDN 失败自动尝试备选 CDN，
- * 均失败时 reject，由调用方渲染错误面板，不抛未捕获异常。
+ * 动态加载 minemap SDK（promise 化）。私有部署单源加载，
+ * 失败时 reject，由调用方渲染错误面板，不抛未捕获异常。
  */
 export function loadMinemap(): Promise<typeof minemap> {
   if (window.minemap) {
@@ -85,19 +84,12 @@ export function loadMinemap(): Promise<typeof minemap> {
     injectCss(MINEMAP_CSS);
     loadingPromise = injectScript(MINEMAP_CDN_MAIN)
       .then(() => getLoadedMinemap())
-      .catch(() => {
-        return injectScript(MINEMAP_CDN_FALLBACK).then(() => {
-          if (!window.minemap) {
-            throw new Error("minemap SDK 未暴露 window.minemap");
-          }
-          return window.minemap;
-        });
-      })
       .catch((error: unknown) => {
         loadingPromise = null;
         throw new Error(
-          `minemap SDK 加载失败（${MINEMAP_CDN_MAIN} / ${MINEMAP_CDN_FALLBACK}），请检查网络。` +
-            (error instanceof Error ? ` ${error.message}` : ` ${String(error)}`),
+          `minemap SDK 加载失败（${MINEMAP_CDN_MAIN}），请检查网络。${
+            error instanceof Error ? ` ${error.message}` : ` ${String(error)}`
+          }`,
         );
       });
   }
@@ -106,18 +98,18 @@ export function loadMinemap(): Promise<typeof minemap> {
 
 /**
  * 初始化 minemap 全局配置（domainUrl / spriteUrl / serviceUrl / key / solution），
- * 依据官方 v3 文档与示例中心约定。
+ * 依据私有部署环境与示例中心约定。
  */
 export function setupMinemapGlobals(token: string): typeof minemap {
   const m = window.minemap;
   if (!m) throw new Error("minemap SDK 尚未加载");
-  m.domainUrl = "https://minemap.minedata.cn";
-  m.dataDomainUrl = "https://minemap.minedata.cn";
-  m.serverDomainUrl = "https://sd-data.minedata.cn";
-  m.spriteUrl = "https://minemap.minedata.cn/minemapapi/v3.0.0/sprite/sprite";
-  m.serviceUrl = "https://service.minedata.cn/service";
+  m.domainUrl = "https://gmap.cqphx.cn:4443";
+  m.dataDomainUrl = "https://gmap.cqphx.cn:4443";
+  m.serverDomainUrl = "https://gmap.cqphx.cn:4443";
+  m.spriteUrl = "https://gmap.cqphx.cn:4443/minemapapi/v3.3.0/sprite/sprite";
+  m.serviceUrl = "https://gmap.cqphx.cn:4443/service";
   m.key = token;
-  m.solution = 11_003;
+  m.solution = 222_609;
   return m;
 }
 
@@ -141,20 +133,20 @@ export function createMinemapMap(
         try {
           map = new m.Map({
             container: containerId,
-            preserveDrawingBuffer: true,
-            style: "https://service.minedata.cn/map/solu/style/11003",
-            center: [116.4026, 39.9494],
+            preserveDrawingBuffer: true, //截图地图底图必须要这样设置
+            style:
+              "https://gmap.cqphx.cn:4443/tianjing-server/mapdata-api/services/MapStyleServer/minemap-style/c8d13ba4fa374f16a60c7951be85fd03/styleJSON?key=d29c4baf318e48cf8d214b03a36b6cf2",
+            center: [106.55, 29.56],
             zoom: 10,
-            pitch: 0,
-            maxZoom: 17,
-            minZoom: 3,
+            maxZoom: 16,
+            minZoom: 9,
             projection: "MERCATOR",
             logoControl: false,
-            doubleClickZoom: true,
+            doubleClickZoom: false,
             ...extra,
           });
         } catch (error: unknown) {
-          reject(new Error("minemap.Map 创建失败: " + getErrorMessage(error)));
+          reject(new Error(`minemap.Map 创建失败: ${getErrorMessage(error)}`));
           return;
         }
         try {

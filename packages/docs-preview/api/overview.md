@@ -39,4 +39,4 @@ UMD Script 用户改为：
 /// <reference types="@ym/map-tools/umd" />
 ```
 
-`minemap.d.ts` 仅覆盖本库、文档与示例实际使用过的 minemap v3.0.0 API，是经验型补充声明而非服务商官方类型包。
+`minemap.d.ts` 仅覆盖本库、文档与示例实际使用过的 minemap v2.1.0 API，是经验型补充声明而非服务商官方类型包。

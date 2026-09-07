@@ -1,7 +1,7 @@
 import type { Feature, FeatureCollection, LineString, Point, Polygon } from "geojson";
 import type { Coordinate } from "@ym/map-tools";
 
-/** 示例共享 GeoJSON 数据（北京城区周边），四框架变体复用。 */
+/** 示例共享 GeoJSON 数据（重庆城区周边），四框架变体复用。 */
 export const districtA: FeatureCollection<Polygon> = {
   type: "FeatureCollection",
   features: [
@@ -12,11 +12,11 @@ export const districtA: FeatureCollection<Polygon> = {
         type: "Polygon",
         coordinates: [
           [
-            [116.355, 39.885],
-            [116.415, 39.885],
-            [116.415, 39.925],
-            [116.355, 39.925],
-            [116.355, 39.885],
+            [106.505, 29.545],
+            [106.565, 29.545],
+            [106.565, 29.585],
+            [106.505, 29.585],
+            [106.505, 29.545],
           ],
         ],
       },
@@ -34,11 +34,11 @@ export const districtB: FeatureCollection<Polygon> = {
         type: "Polygon",
         coordinates: [
           [
-            [116.43, 39.9],
-            [116.475, 39.9],
-            [116.475, 39.93],
-            [116.43, 39.93],
-            [116.43, 39.9],
+            [106.58, 29.56],
+            [106.625, 29.56],
+            [106.625, 29.59],
+            [106.58, 29.59],
+            [106.58, 29.56],
           ],
         ],
       },
@@ -51,28 +51,28 @@ export const markerPoints: FeatureCollection<Point> = {
   features: [
     {
       type: "Feature",
-      properties: { name: "北京站" },
-      geometry: { type: "Point", coordinates: [116.4272, 39.9027] },
+      properties: { name: "渝中" },
+      geometry: { type: "Point", coordinates: [106.5772, 29.5627] },
     },
     {
       type: "Feature",
-      properties: { name: "天安门" },
-      geometry: { type: "Point", coordinates: [116.3976, 39.9087] },
+      properties: { name: "解放碑" },
+      geometry: { type: "Point", coordinates: [106.5476, 29.5687] },
     },
     {
       type: "Feature",
-      properties: { name: "三里屯" },
-      geometry: { type: "Point", coordinates: [116.4555, 39.9372] },
+      properties: { name: "南岸" },
+      geometry: { type: "Point", coordinates: [106.6055, 29.5972] },
     },
     {
       type: "Feature",
-      properties: { name: "中关村" },
-      geometry: { type: "Point", coordinates: [116.3154, 39.9829] },
+      properties: { name: "沙坪坝" },
+      geometry: { type: "Point", coordinates: [106.4654, 29.6429] },
     },
     {
       type: "Feature",
-      properties: { name: "望京" },
-      geometry: { type: "Point", coordinates: [116.4823, 39.9984] },
+      properties: { name: "渝北" },
+      geometry: { type: "Point", coordinates: [106.6323, 29.6584] },
     },
   ],
 };
@@ -86,12 +86,12 @@ export const routeLine: FeatureCollection<LineString> = {
       geometry: {
         type: "LineString",
         coordinates: [
-          [116.31, 39.95],
-          [116.34, 39.96],
-          [116.36, 39.945],
-          [116.39, 39.95],
-          [116.42, 39.935],
-          [116.44, 39.92],
+          [106.46, 29.61],
+          [106.49, 29.62],
+          [106.51, 29.605],
+          [106.54, 29.61],
+          [106.57, 29.595],
+          [106.59, 29.58],
         ],
       },
     },
@@ -103,7 +103,7 @@ export const viewportOverlays: Feature[] = [
   {
     type: "Feature",
     properties: { name: "起点" },
-    geometry: { type: "Point", coordinates: [116.29, 39.88] },
+    geometry: { type: "Point", coordinates: [106.44, 29.54] },
   },
   {
     type: "Feature",
@@ -111,9 +111,9 @@ export const viewportOverlays: Feature[] = [
     geometry: {
       type: "LineString",
       coordinates: [
-        [116.3, 39.88],
-        [116.38, 39.9],
-        [116.42, 39.87],
+        [106.45, 29.54],
+        [106.53, 29.56],
+        [106.57, 29.53],
       ],
     },
   },
@@ -124,11 +124,11 @@ export const viewportOverlays: Feature[] = [
       type: "Polygon",
       coordinates: [
         [
-          [116.45, 39.93],
-          [116.5, 39.93],
-          [116.5, 39.97],
-          [116.45, 39.97],
-          [116.45, 39.93],
+          [106.6, 29.59],
+          [106.65, 29.59],
+          [106.65, 29.63],
+          [106.6, 29.63],
+          [106.6, 29.59],
         ],
       ],
     },
@@ -139,20 +139,20 @@ export const viewportOverlays: Feature[] = [
 export const geoDemo = {
   /** 演示多边形（用于 bbox 与顶点提取） */
   polygonCoords: [
-    [116.35, 39.89],
-    [116.42, 39.9],
-    [116.44, 39.95],
-    [116.36, 39.96],
-    [116.35, 39.89],
+    [106.5, 29.55],
+    [106.57, 29.56],
+    [106.59, 29.61],
+    [106.51, 29.62],
+    [106.5, 29.55],
   ] as Coordinate[],
   /** 方位角演示：起点 -> 终点 */
-  currentPoint: [116.4, 39.9] as Coordinate,
-  nextPoint: [116.46, 39.94] as Coordinate,
+  currentPoint: [106.55, 29.56] as Coordinate,
+  nextPoint: [106.61, 29.6] as Coordinate,
   /** assertCoordinate 校验用例 */
   checkCases: [
-    { label: "[116.4, 39.9]", value: [116.4, 39.9] },
-    { label: "'116.4,39.9'（字符串）", value: "116.4,39.9" },
-    { label: "[116.4, 39.9, 10]（三维）", value: [116.4, 39.9, 10] },
+    { label: "[106.55, 29.56]", value: [106.55, 29.56] },
+    { label: "'106.55,29.56'（字符串）", value: "106.55,29.56" },
+    { label: "[106.55, 29.56, 10]（三维）", value: [106.55, 29.56, 10] },
     { label: "null", value: null },
   ],
 };

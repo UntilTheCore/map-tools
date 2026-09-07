@@ -1,6 +1,6 @@
 # map-tools-monorepo
 
-pnpm monorepo，核心包为 `@ym/map-tools` v3：基于 `@turf/turf` 与 CDN 注入的 minemap v3.0.0 SDK，提供框架无关地图工具、Vue 2/3 与 React 适配器，以及 UMD `FE_utils`。
+pnpm monorepo，核心包为 `@ym/map-tools` v3：基于 `@turf/turf` 与 CDN 注入的私有部署 minemap v2.1.0 SDK，提供框架无关地图工具、Vue 2/3 与 React 适配器，以及 UMD `FE_utils`。
 
 ## 常用命令
 

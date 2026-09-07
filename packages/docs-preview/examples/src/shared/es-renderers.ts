@@ -224,9 +224,8 @@ export const renderPbfLayer: ExampleRender = (container, options) => {
   const log = createLogPanel(container, "PBF 日志");
   const sourceId = createSourceId("demo", "pbfLanduse");
   const layerId = createLayerId("demo", "pbfLanduse");
-  const tiles = [
-    `https://sd-data.minedata.cn/data/Landuse/{z}/{x}/{y}?token=${options.token}&solu=11003`,
-  ];
+  // 私有 PBF 数据源待补充：配置 tiles 后示例即可正常加载数据。
+  const tiles: string[] = [];
   let map: minemap.Map | null = null;
   let disposed = false;
 
@@ -241,6 +240,10 @@ export const renderPbfLayer: ExampleRender = (container, options) => {
   const addPbf = () => {
     if (!map) {
       status.error("地图尚未初始化完成");
+      return;
+    }
+    if (tiles.length === 0) {
+      status.error("未配置私有 PBF 数据源");
       return;
     }
     replaceVectorSource(map, { id: sourceId, tiles, layers: [layer] });
@@ -319,13 +322,13 @@ export const renderViewport: ExampleRender = (container, options) => {
       pointLayer(sourceId, layerId),
     ]);
     status.info("点、线、面覆盖物已绘制");
-    addButton(bar, "easeTo 天安门", () =>
+    addButton(bar, "easeTo 解放碑", () =>
       easeTo(map, {
-        center: [116.3976, 39.9087],
+        center: [106.5476, 29.5687],
         zoom: 12,
       }),
     );
-    addButton(bar, "panTo 中关村", () => panTo(map, [116.3154, 39.9829]));
+    addButton(bar, "panTo 沙坪坝", () => panTo(map, [106.4654, 29.6429]));
     addButton(bar, "setZoom 14", () => setZoom(map, 14));
     addButton(bar, "fitToFeatures", () =>
       fitToFeatures(map, viewportOverlays, {
@@ -339,10 +342,10 @@ export const renderViewport: ExampleRender = (container, options) => {
           type: "Polygon",
           coordinates: [
             [
-              [116.35, 39.88],
-              [116.5, 39.88],
-              [116.5, 39.98],
-              [116.35, 39.88],
+              [106.5, 29.54],
+              [106.65, 29.54],
+              [106.65, 29.64],
+              [106.5, 29.54],
             ],
           ],
         },
@@ -374,9 +377,9 @@ export const renderMarkerCleanup: ExampleRender = (container, options) => {
       status.info(`已移除 ${count} 个 Marker`);
     };
     const addMixed = () => {
-      const marker = new minemap.Marker().setLngLat([116.37, 39.95]).addTo(map);
+      const marker = new minemap.Marker().setLngLat([106.52, 29.61]).addTo(map);
       const popup = new minemap.Popup({ closeOnClick: false })
-        .setLngLat([116.43, 39.95])
+        .setLngLat([106.55, 29.56])
         .setDOMContent(
           Object.assign(document.createElement("div"), {
             textContent: "混合 Popup",
@@ -462,7 +465,7 @@ export const renderGeometry: ExampleRender = (container, options) => {
     `filtered Point=${points.length}, LineString=${lines.length}, Polygon=${polygons.length}`,
   );
   try {
-    assertCoordinate([116.4, 39.9]);
+    assertCoordinate([106.55, 29.56]);
     log.log("assertCoordinate -> valid");
   } catch (error) {
     log.log(errorMessage(error));

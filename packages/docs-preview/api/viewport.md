@@ -1,8 +1,8 @@
 # Viewport
 
 ```ts
-easeTo(map, { center: [116.3976, 39.9087], zoom: 12 });
-panTo(map, [116.3154, 39.9829]);
+easeTo(map, { center: [106.5476, 29.5687], zoom: 12 });
+panTo(map, [106.4654, 29.6429]);
 setZoom(map, 8);
 ```
 

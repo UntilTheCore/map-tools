@@ -12,11 +12,11 @@ pnpm add @ym/map-tools
 
 ## 前置 minemap SDK
 
-minemap SDK 不参与 npm 安装和本库运行时打包。浏览器页面需要先加载 SDK：
+minemap SDK 不参与 npm 安装和本库运行时打包。浏览器页面需要先加载 SDK（私有部署，v2.1.0；插件脚本清单见技能包 `packages/skills/map-tools/SKILL.md`）：
 
 ```html
-<link rel="stylesheet" href="https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.css" />
-<script src="https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js"></script>
+<link rel="stylesheet" href="https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.css" />
+<script src="https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.js"></script>
 ```
 
 SDK 加载前 `window.minemap` 是可选值。TypeScript 项目通过显式类型入口启用补充声明：
@@ -25,7 +25,7 @@ SDK 加载前 `window.minemap` 是可选值。TypeScript 项目通过显式类�
 /// <reference types="@ym/map-tools/minemap" />
 ```
 
-该声明基于 minemap v3.0.0 的实际使用经验维护，不是服务商官方 npm 类型包。
+该声明基于 minemap v2.1.0 的实际使用经验维护，不是服务商官方 npm 类型包。
 
 ## 第一个 GeoJSON 图层
 
@@ -37,8 +37,9 @@ const layerId = createLayerId("demo", "district");
 
 const map = new minemap.Map({
   container: "map",
-  style: "https://service.minedata.cn/map/solu/style/11003",
-  center: [116.4026, 39.9494],
+  style:
+    "https://gmap.cqphx.cn:4443/tianjing-server/mapdata-api/services/MapStyleServer/minemap-style/c8d13ba4fa374f16a60c7951be85fd03/styleJSON?key=d29c4baf318e48cf8d214b03a36b6cf2",
+  center: [106.55, 29.56],
   zoom: 10,
 });
 

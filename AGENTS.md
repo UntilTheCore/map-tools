@@ -4,7 +4,7 @@
 
 ## 1. 项目概述
 
-pnpm monorepo，核心产物为 **@ym/map-tools**——基于 `@turf/turf` 与 minemap（元图科技 Minedata）JS SDK 的地图工具库，支持 Vue 2/3、React、原生 HTML（UMD）多框架接入，配套 VitePress 文档站与示例中心，以及 Qoder Agent 技能包。
+pnpm monorepo，核心产物为 **@ym/map-tools**——基于 `@turf/turf` 与 JS SDK 的地图工具库，支持 Vue 2/3、React、原生 HTML（UMD）多框架接入，配套 VitePress 文档站与示例中心，以及技能包。
 
 ```
 map-tools/                            # map-tools-monorepo（private，packageManager: pnpm@11.15.1）
@@ -16,7 +16,7 @@ map-tools/                            # map-tools-monorepo（private，packageMa
 └── packages/
     ├── map-tools/                    # @ym/map-tools v3.0.0，插件工具库（Vite 库模式）
     ├── minemap-types/                # @ym/minemap-types v0.1.0，minemap SDK 全局类型（纯 .d.ts，无构建）
-    ├── skills/                       # map-tools-skills（Qoder 技能包，private）
+    ├── skills/                       # 技能包
     └── docs-preview/                 # VitePress 1.x 文档站 + 四框架示例中心（private）
 ```
 
@@ -26,7 +26,7 @@ map-tools/                            # map-tools-monorepo（private，packageMa
 | ---------------------- | ----------------- | ----- | ------------------------------------------------------------------------------------- |
 | packages/map-tools     | @ym/map-tools     | 3.0.0 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                        |
 | packages/minemap-types | @ym/minemap-types | 0.1.0 | minemap SDK / minemaputil / minemap.edit 全局类型声明（唯一数据源，见 ADR 0001）      |
-| packages/skills        | map-tools-skills  | 0.1.0 | Qoder 技能包，`packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）     |
+| packages/skills        | map-tools-skills  | 0.1.0 | `packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）                   |
 | packages/docs-preview  | docs-preview      | 1.0.0 | VitePress 文档站 + 示例中心（vue3/vue2/react/html 四框架 Tab、iframe 预览、源码面板） |
 
 ## 2. 环境要求
@@ -171,12 +171,11 @@ src/
 
 ### 4.7 minemap 外部依赖约定
 
-- minemap（Minedata）SDK **无 npm 包**，运行时经 CDN 动态加载：
-  - JS 主 CDN（实测 200）：`https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js`
-  - JS 备 CDN（实测 200，内容相同）：`https://minedata.cn/minemapapi/v3.0.0/minemap.js`
-  - CSS：`https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.css`
+- minemap SDK **无 npm 包**，运行时经 CDN 动态加载（私有部署单源）：
+  - JS 主 CDN（实测 200）：`https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.js`
+  - CSS：`https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.css`
 - SDK 类型由独立包 **@ym/minemap-types** 提供（`packages/minemap-types/index.d.ts`，自包含单文件，禁止反向引用 `@ym/map-tools`）：`namespace minemap`（Map/Popup/Marker/LngLat/控件/事件等）+ `minemaputil` + `minemap.edit` + `minemap.lbsUtil`；map-tools 的 `src/types/minemap.d.ts` 仅为薄入口（`import type {} from "@ym/minemap-types"`），`@ym/map-tools/minemap` 子路径与 `/// <reference types="@ym/map-tools/minemap" />` 均经此链激活（实测：reference types 指令支持带 scope 的包解析，非仅限 `node_modules/@types/`）
-- docs-preview 示例中心使用 [examples/src/shared/loadMinemap.ts](packages/docs-preview/examples/src/shared/loadMinemap.ts) 动态加载器（主/备 CDN 自动切换、promise 化；token 获取顺序：URL `?token=` → localStorage `MINEMAP_TOKEN`）
+- docs-preview 示例中心使用 [examples/src/shared/loadMinemap.ts](packages/docs-preview/examples/src/shared/loadMinemap.ts) 动态加载器（私有部署单源加载、promise 化；token 获取顺序：URL `?token=` → localStorage `MINEMAP_TOKEN`）。示例默认参数：solution `222609`、center `[106.55, 29.56]`（重庆）、私有 MapStyleServer styleJSON（key 内嵌于 URL）
 
 ### 4.8 docs-preview 示例中心
 

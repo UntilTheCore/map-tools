@@ -1,7 +1,8 @@
 /**
  * Standalone ambient TypeScript declarations for the externally loaded minemap
- * SDK (2D API; docs reference v2.1.x, this project pins v3.0.0 from CDN) plus
- * its plugin libraries `minemaputil` and `minemap.edit`.
+ * SDK (2D API; maintained against the privately deployed v2.1.x runtime at
+ * gmap.cqphx.cn:4443) plus its plugin libraries `minemaputil` and
+ * `minemap.edit`.
  *
  * The vendor does not publish an npm type package. This declaration is
  * maintained against the official "minemap-jsapi-skill" reference set plus

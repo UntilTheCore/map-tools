@@ -11,7 +11,7 @@ type Padding = { top: number; right: number; bottom: number; left: number };
 ## 坐标与方位
 
 ```ts
-assertCoordinate([116.4, 39.9]);
+assertCoordinate([106.55, 29.56]);
 const valid = isCoordinate(value);
 const bearing = getBearing(from, to);
 const rotation = getRotation(bearing);

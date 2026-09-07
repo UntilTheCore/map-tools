@@ -16,7 +16,7 @@ const loaded = await waitForSourceLoaded(map, "landuse-source", {
 
 ```ts
 const features = queryRenderedFeatures(map, {
-  point: [116.4, 39.9],
+  point: [106.55, 29.56],
   layers: ["landuse-fill"],
   filter: ["==", "kind", "park"],
 });

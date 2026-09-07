@@ -71,7 +71,7 @@ export default defineConfig({
     socialLinks: [{ icon: "github", link: "https://github.com" }],
 
     footer: {
-      message: "基于 minemap SDK（元图科技 Minedata）",
+      message: "基于 minemap SDK",
       copyright: "Copyright © 2026 @ym/map-tools",
     },
 

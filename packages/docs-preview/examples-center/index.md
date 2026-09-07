@@ -1,10 +1,10 @@
 # 示例中心
 
-类高德开放平台示例中心：左侧为 8 个交互式示例，点击进入详情页，可切换 **Vue 3 / Vue 2.7 / React / 原生 HTML（FE_utils UMD）** 四种框架变体，实时预览地图效果并查看对应源码。
+可切换 **Vue 3 / Vue 2.7 / React / 原生 HTML（FE_utils UMD）** 四种框架变体，实时预览地图效果并查看对应源码。
 
 ## 使用说明
 
-- 地图基于 minemap SDK（元图科技 Minedata），示例通过 CDN 动态加载，无需本地 SDK。
+- 地图基于 minemap SDK，示例通过 CDN 动态加载，无需本地 SDK。
 - 未配置 token 时示例会渲染占位面板（不初始化地图、不抛异常），请通过以下任一方式配置：
   1. 在示例 URL 追加 `?token=xxx`（如 `/demos/vue3.html?ex=init&token=xxx`）；
   2. 在示例页点击「设置 token」写入 `localStorage.MINEMAP_TOKEN`。

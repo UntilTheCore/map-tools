@@ -3,8 +3,8 @@
 UMD 全局名固定为 `FE_utils`，产物路径固定为 `dist/umd/index.umd.js`。
 
 ```html
-<link rel="stylesheet" href="https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.css" />
-<script src="https://minemap.minedata.cn/minemapapi/v3.0.0/minemap.js"></script>
+<link rel="stylesheet" href="https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.css" />
+<script src="https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.js"></script>
 <script src="./vendor/fe-utils.umd.js"></script>
 ```
 
@@ -15,8 +15,9 @@ UMD 全局名固定为 `FE_utils`，产物路径固定为 `dist/umd/index.umd.js
 
   const map = new minemap.Map({
     container: "map",
-    style: "https://service.minedata.cn/map/solu/style/11003",
-    center: [116.4026, 39.9494],
+    style:
+      "https://gmap.cqphx.cn:4443/tianjing-server/mapdata-api/services/MapStyleServer/minemap-style/c8d13ba4fa374f16a60c7951be85fd03/styleJSON?key=d29c4baf318e48cf8d214b03a36b6cf2",
+    center: [106.55, 29.56],
     zoom: 10,
   });
 
