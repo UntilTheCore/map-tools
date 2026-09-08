@@ -2,6 +2,8 @@
 
 可切换 **Vue 3 / Vue 2.7 / React / 原生 HTML（FE_utils UMD）** 四种框架变体，实时预览地图效果并查看对应源码。
 
+> 🧪 试用新版 [示例实验室（按功能分类 + 预览 + 源码复制）](/examples-center/playground)。
+
 ## 使用说明
 
 - 地图基于 minemap SDK，示例通过 CDN 动态加载，无需本地 SDK。

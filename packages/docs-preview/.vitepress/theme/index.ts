@@ -2,6 +2,7 @@ import DefaultTheme from "vitepress/theme";
 import type { Theme } from "vitepress";
 import ExampleList from "./components/ExampleList.vue";
 import ExampleDetail from "./components/ExampleDetail.vue";
+import Playground from "./components/Playground.vue";
 import "./custom.css";
 
 /**
@@ -12,5 +13,6 @@ export default {
   enhanceApp({ app }) {
     app.component("ExampleList", ExampleList);
     app.component("ExampleDetail", ExampleDetail);
+    app.component("Playground", Playground);
   },
 } satisfies Theme;

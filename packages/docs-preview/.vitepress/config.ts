@@ -59,6 +59,7 @@ export default defineConfig({
         {
           text: "示例中心",
           items: [
+            { text: "示例实验室（预览+复制）", link: "/examples-center/playground" },
             { text: "示例列表", link: "/examples-center/" },
             { text: "示例详情（iframe 预览）", link: "/examples-center/example" },
           ],

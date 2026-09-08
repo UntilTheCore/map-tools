@@ -11,6 +11,23 @@ export interface ExampleMeta {
 }
 
 export const registry: Record<string, ExampleMeta> = {
+  "map-init": {
+    title: "地图初始化",
+    description:
+      "加载 minemap SDK 并创建地图实例，展示各框架持有地图实例的生命周期写法（Vue onMounted / React useEffect / 原生脚本）。",
+    apis: ["createMinemapMap", "onMounted", "useEffect"],
+  },
+  "map-destroy": {
+    title: "地图销毁",
+    description: "调用 destroyMap 销毁地图实例并释放容器，支持反复销毁与重新创建，含创建竞态防护。",
+    apis: ["destroyMap"],
+  },
+  "map-state": {
+    title: "地图状态",
+    description:
+      "监听 moveend / zoomend 实时读取 getZoom / getCenter，并演示 panTo / easeTo / setZoom 状态控制。",
+    apis: ["getZoom", "getCenter", "panTo", "easeTo", "setZoom"],
+  },
   init: {
     title: "底图初始化与销毁",
     description: "使用 minemap SDK 创建地图实例，演示 destroyMap 销毁与重新初始化。",
