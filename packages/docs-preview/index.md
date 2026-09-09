@@ -10,8 +10,8 @@ hero:
       text: 快速开始
       link: /guide/getting-started
     - theme: alt
-      text: 示例中心
-      link: /examples-center/
+      text: 示例实验室
+      link: /examples-center/playground
     - theme: alt
       text: API 参考
       link: /api/overview
@@ -53,4 +53,4 @@ ensureLayers(map, [{ id: layerId, type: "fill", source: sourceId }]);
 
 - [安装与 SDK 类型](/guide/getting-started)
 - [v2 → v3 迁移表](/guide/migration)
-- [8 个示例的四框架实现](/examples-center/)
+- [可编辑运行的示例实验室](/examples-center/playground)

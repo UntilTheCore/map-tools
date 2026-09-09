@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Playground Runner</title>
+    <!--
+      runner：playground 编辑代码的运行容器（父页 iframe，postMessage 通信）。
+      import map 把编辑代码中的裸模块名解析到本地预打包 vendor（./vendor/*.esm.js），
+     Sucrase 编译产物保持 ESM 原样 import，由浏览器原生解析。
+    -->
+    <script type="importmap">
+      {
+        "imports": {
+          "vue": "./vendor/vue3.esm.js",
+          "vue2": "./vendor/vue2.esm.js",
+          "react": "./vendor/react.esm.js",
+          "react-dom/client": "./vendor/react.esm.js",
+          "react/jsx-runtime": "./vendor/react.esm.js",
+          "@ym/map-tools/vue3": "./vendor/maptools-vue3.esm.js",
+          "@shared/loadMinemap": "./vendor/shared.esm.js",
+          "@shared/demo": "./vendor/shared.esm.js"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="./vendor/shared.esm.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        font-family: inherit;
+      }
+      #map-host {
+        position: absolute;
+        inset: 0;
+      }
+      #runner-error {
+        position: absolute;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 24px;
+        background: #140d0a;
+        color: #ffd9cd;
+        text-align: center;
+        z-index: 9999;
+      }
+      #runner-error h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #ffb3a0;
+      }
+      #runner-error pre {
+        margin: 0;
+        max-width: 90%;
+        max-height: 60%;
+        overflow: auto;
+        text-align: left;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #ffd9cd;
+        font-family: ui-monospace, Consolas, monospace;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map-host"></div>
+    <div id="runner-error"><h2>运行出错</h2><pre id="runner-error-detail"></pre></div>
+    <script src="./runner/runner.js"></script>
+  </body>
+</html>

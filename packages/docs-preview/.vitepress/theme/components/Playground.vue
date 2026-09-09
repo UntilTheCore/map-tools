@@ -1,334 +1,601 @@
+<template>
+  <NConfigProvider
+    class="playground"
+    :locale="zhCN"
+    :date-locale="dateZhCN"
+    :theme-overrides="themeOverrides"
+  >
+    <NLayout has-sider class="playground__shell">
+      <NLayoutSider
+        bordered
+        collapse-mode="width"
+        :collapsed-width="0"
+        :width="220"
+        :collapsed="menuCollapsed"
+        show-trigger
+        @update:collapsed="menuCollapsed = $event"
+      >
+        <div class="playground__menu">
+          <div
+            v-for="category in exampleCategories"
+            :key="category.id"
+            class="playground__category"
+          >
+            <div class="playground__category-title">{{ category.title }}</div>
+            <button
+              v-for="id in category.examples"
+              :key="id"
+              type="button"
+              class="playground__item"
+              :class="{ 'playground__item--active': id === activeId }"
+              @click="selectExample(id)"
+            >
+              {{ registry[id]?.title ?? id }}
+            </button>
+          </div>
+        </div>
+      </NLayoutSider>
+
+      <NLayout class="playground__main">
+        <NSplit
+          direction="horizontal"
+          :size="splitSize"
+          :min="0.22"
+          class="playground__split"
+          @update:size="onSplitSize"
+          @drag-start="onDragStart"
+          @drag-end="onDragEnd"
+        >
+          <template #1>
+            <div class="playground__map">
+              <!-- 拖动开始后覆盖一层透明遮罩，避免鼠标进入 iframe 后拖动事件被吞 -->
+              <div v-show="dragging" class="playground__map-shield" />
+              <iframe
+                ref="iframeRef"
+                :key="iframeKey"
+                src="/runner.html"
+                class="playground__iframe"
+                title="示例预览"
+                @load="onIframeLoad"
+              />
+            </div>
+          </template>
+          <template #2>
+            <div class="playground__code">
+              <!-- 描述区：占用代码容器高度，位于代码编辑器上方 -->
+              <div class="playground__desc">
+                <h3>{{ meta.title }}</h3>
+                <p>{{ meta.description }}</p>
+              </div>
+              <div class="playground__code-head">
+                <span class="playground__code-path">{{ sourcePath }}</span>
+                <div class="playground__actions">
+                  <NDropdown :options="variantOptions" trigger="click" @select="selectVariant">
+                    <NTooltip>
+                      <template #trigger>
+                        <NButton size="small" quaternary>
+                          {{ activeVariantMeta.label }}
+                          <template #icon>
+                            <NIcon><ChevronDownIcon /></NIcon>
+                          </template>
+                        </NButton>
+                      </template>
+                      切换语言
+                    </NTooltip>
+                  </NDropdown>
+                  <NTooltip>
+                    <template #trigger>
+                      <NButton
+                        size="small"
+                        type="primary"
+                        secondary
+                        :circle="false"
+                        @click="runCode"
+                      >
+                        <template #icon>
+                          <NIcon><PlayCircleOutline /></NIcon>
+                        </template>
+                      </NButton>
+                    </template>
+                    运行当前编辑器中的代码（Ctrl+Enter）
+                  </NTooltip>
+                  <NTooltip>
+                    <template #trigger>
+                      <NButton size="small" quaternary @click="copySource">
+                        <template #icon>
+                          <NIcon><CopyOutline /></NIcon>
+                        </template>
+                      </NButton>
+                    </template>
+                    复制全部代码
+                  </NTooltip>
+                  <NTooltip>
+                    <template #trigger>
+                      <NButton size="small" quaternary @click="resetSource">
+                        <template #icon>
+                          <NIcon><ArrowUndoCircleOutline /></NIcon>
+                        </template>
+                      </NButton>
+                    </template>
+                    还原为初始代码并运行
+                  </NTooltip>
+                </div>
+              </div>
+              <div ref="editorHost" class="playground__editor" />
+            </div>
+          </template>
+        </NSplit>
+      </NLayout>
+    </NLayout>
+  </NConfigProvider>
+</template>
+
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+/**
+ * 示例实验室：左侧分类菜单（可收起）+ 右侧「地图预览 | 代码编辑器」。
+ * - 代码编辑器：CodeMirror 6，编辑后手动运行（运行按钮 / Ctrl+Enter）
+ * - 编译：Sucrase TS/TSX → ESM，相对导入改写为 @shared/*，
+ *   在 /runner.html iframe 内经 import map 解析本地 vendor 后运行
+ * - 语言：vue3 / vue2 / react / html 四套示例源码
+ * - key 由系统提供（SYSTEM_MINEMAP_KEY），示例代码不出现 key
+ */
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
+import {
+  NButton,
+  NConfigProvider,
+  NDropdown,
+  NIcon,
+  NLayout,
+  NLayoutSider,
+  NSplit,
+  NTooltip,
+  createDiscreteApi,
+  dateZhCN,
+  zhCN,
+} from "naive-ui";
+import { basicSetup, EditorView } from "codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { html } from "@codemirror/lang-html";
+import { keymap } from "@codemirror/view";
+import { Prec } from "@codemirror/state";
+import { transform } from "sucrase";
+import ChevronDown from "naive-ui/es/_internal/icons/ChevronDown";
+import { ArrowUndoCircleOutline, CopyOutline, PlayCircleOutline } from "@vicons/ionicons5";
 import {
   exampleCategories,
   getCategorizedExample,
-  listCategorizedExamples,
+  DEFAULT_PLAYGROUND_EXAMPLE,
 } from "../../../examples/src/categories";
+import { registry } from "../../../examples/src/registry";
 
-/**
- * 示例实验室（Playground）：左侧分类菜单 + 右侧「iframe 预览 | 源码面板」分栏。
- * - 分类数据来自 examples/src/categories.ts（引用 registry 元信息）
- * - variants 每项：id（Tab 标识）、entry（iframe 文件名，demos 构建产物）、
- *   srcDir（源码 glob 目录 examples/src/{srcDir}/{id}.{file}）
- *   HTML 变体构建产物为 plain.html（entry=plain），源码目录仍为 examples/src/html
- * - iframe src 指向 /demos/{entry}.html?ex={id}；token 不写入 iframe URL，
- *   经同源 localStorage.MINEMAP_TOKEN 共享
- * - 源码通过 import.meta.glob(..., { query: "?raw" }) 按需读取，展示的即 iframe 实际运行代码
- */
-const variants = [
-  { id: "vue3", label: "Vue 3", entry: "vue3", srcDir: "vue3", file: "ts" },
-  { id: "vue2", label: "Vue 2.7", entry: "vue2", srcDir: "vue2", file: "ts" },
-  { id: "react", label: "React", entry: "react", srcDir: "react", file: "tsx" },
-  { id: "html", label: "原生 HTML · FE_utils", entry: "plain", srcDir: "html", file: "ts" },
+interface Variant {
+  id: "vue3" | "vue2" | "react" | "html";
+  label: string;
+  srcDir: string;
+  file: string;
+  /** 源码是否为 Vue SFC（需先经 vue/compiler-sfc 编译为 ESM 组件模块） */
+  sfc?: boolean;
+}
+
+const variants: readonly Variant[] = [
+  { id: "vue3", label: "Vue 3", srcDir: "vue3", file: "vue", sfc: true },
+  { id: "vue2", label: "Vue 2.7", srcDir: "vue2", file: "ts" },
+  { id: "react", label: "React", srcDir: "react", file: "tsx" },
+  { id: "html", label: "HTML + JS", srcDir: "html", file: "ts" },
 ] as const;
 
-type VariantId = (typeof variants)[number]["id"];
+/** 代码编辑器允许的最小宽度（px）；拖动到此宽度后不再变窄 */
+const CODE_MIN_WIDTH = 320;
 
-const rawModules = import.meta.glob("../../../examples/src/*/*.{ts,tsx}", {
+/** 示例源码（?raw 懒加载文本；loader 返回值可能是字符串或 {default} 命名空间，见 loadSource） */
+const rawSources = import.meta.glob("../../../examples/src/*/*.{ts,tsx,vue}", {
   query: "?raw",
   import: "default",
-});
+}) as Record<string, () => Promise<unknown>>;
 
-const categories = exampleCategories;
-const allExamples = listCategorizedExamples();
-const activeId = ref(allExamples[0]?.id ?? "map-init");
-const activeVariant = ref<VariantId>("vue3");
-const token = ref("");
-const source = ref("");
-const loadingSource = ref(false);
-const iframeKey = ref(0);
+const activeId = ref(DEFAULT_PLAYGROUND_EXAMPLE);
+const activeVariant = ref<Variant["id"]>("vue3");
+const menuCollapsed = ref(false);
+const splitSize = ref<number>(0.5);
+const dragging = ref(false);
 const copied = ref(false);
-const tokenSavedTip = ref("");
-let tipTimer: ReturnType<typeof setTimeout> | undefined;
-let copyTimer: ReturnType<typeof setTimeout> | undefined;
 
-const current = computed(() => getCategorizedExample(activeId.value));
-const variantFile = computed(() => variants.find((v) => v.id === activeVariant.value)!);
+// 独立于 NMessageProvider 的离散 API（SSR 安全，仅客户端弹提示）
+const { message } = createDiscreteApi(["message"]);
+const iframeRef = ref<HTMLIFrameElement | null>(null);
+const editorHost = ref<HTMLElement | null>(null);
+const editor = shallowRef<EditorView | null>(null);
+const initialSource = ref("");
+const iframeKey = ref(0);
+
+const activeVariantMeta = computed(
+  () => variants.find((v) => v.id === activeVariant.value) ?? variants[0],
+);
+const meta = computed(() => registry[activeId.value] ?? registry[DEFAULT_PLAYGROUND_EXAMPLE]);
 const sourcePath = computed(
-  () => `examples/src/${variantFile.value.srcDir}/${activeId.value}.${variantFile.value.file}`,
+  () =>
+    `examples/src/${activeVariantMeta.value.srcDir}/${activeId.value}.${activeVariantMeta.value.file}`,
+);
+const variantOptions = computed(() =>
+  variants.map((v) => ({
+    label: v.label,
+    key: v.id,
+    disabled: v.id === activeVariant.value,
+  })),
 );
 
-const iframeSrc = computed(() => `/demos/${variantFile.value.entry}.html?ex=${activeId.value}`);
+// 品牌主色对齐站点 custom.css
+const themeOverrides = {
+  common: {
+    primaryColor: "#2bb673",
+    primaryColorHover: "#3ed98c",
+    primaryColorPressed: "#1d8f5a",
+    primaryColorSuppl: "#3ed98c",
+  },
+};
 
-function readToken() {
-  try {
-    const fromUrl = new URLSearchParams(window.location.search).get("token");
-    if (fromUrl) {
-      localStorage.setItem("MINEMAP_TOKEN", fromUrl);
-      token.value = fromUrl;
-      return;
-    }
-    token.value = localStorage.getItem("MINEMAP_TOKEN") ?? "";
-  } catch {
-    token.value = "";
-  }
-}
+// 图标：@vicons/ionicons5（PlayCircleOutline / CopyOutline / ArrowUndoCircleOutline）
+// 语言下拉箭头沿用 naive-ui 内部图标
+const ChevronDownIcon = ChevronDown;
 
-async function loadSource() {
-  loadingSource.value = true;
-  try {
-    const key = `../../../examples/src/${variantFile.value.srcDir}/${activeId.value}.${variantFile.value.file}`;
-    const loader = rawModules[key];
-    source.value = loader ? ((await loader()) as string) : `// 未找到源码: ${key}`;
-  } finally {
-    loadingSource.value = false;
-  }
-}
-
-function syncUrl() {
-  const url = new URL(window.location.href);
-  url.searchParams.set("ex", activeId.value);
-  url.searchParams.set("frame", activeVariant.value);
-  window.history.replaceState(null, "", url.toString());
+function loadSource(): Promise<string> {
+  const key = `../../../examples/src/${activeVariantMeta.value.srcDir}/${activeId.value}.${activeVariantMeta.value.file}`;
+  const loader = rawSources[key];
+  if (!loader) return Promise.resolve(`// 未找到源码: ${key}`);
+  // Vite/VitePress dev 与 build 对 query:'?raw' + import:'default' 的 loader 返回形态
+  // 不一致：可能直接 resolve 源码字符串（dev 实测），也可能 resolve 模块命名空间对象
+  // （{default: 源码}）。两种形态都兼容。
+  return Promise.resolve(loader()).then((mod) =>
+    typeof mod === "string" ? mod : ((mod?.default as string | undefined) ?? ""),
+  );
 }
 
 function selectExample(id: string) {
-  if (activeId.value === id) return;
-  activeId.value = id;
+  const found = getCategorizedExample(id);
+  activeId.value = found.id;
   syncUrl();
 }
 
-function setToken() {
-  const input = window.prompt(
-    "请输入 minemap token（写入 localStorage.MINEMAP_TOKEN）：",
-    token.value,
-  );
-  if (input !== null && input.trim()) {
-    token.value = input.trim();
-    try {
-      localStorage.setItem("MINEMAP_TOKEN", input.trim());
-    } catch {
-      /* ignore */
-    }
-    refreshIframe();
-    showTip("token 已保存，预览已刷新");
-  } else if (input === "") {
-    token.value = "";
-    try {
-      localStorage.removeItem("MINEMAP_TOKEN");
-    } catch {
-      /* ignore */
-    }
-    refreshIframe();
-    showTip("token 已清除，预览已刷新");
+function selectVariant(id: string | number) {
+  if (typeof id !== "string" || !variants.some((v) => v.id === id)) return;
+  activeVariant.value = id as Variant["id"];
+  syncUrl();
+}
+
+function syncUrl() {
+  history.replaceState(null, "", `/examples-center/playground.html?frame=${activeVariant.value}`);
+}
+
+/**
+ * 编辑器内容 → 可运行 ESM：
+ * 1. SFC（.vue）：vue/compiler-sfc 编译为单模块 ESM 组件（template 内联为 render），
+ *    追加 `export default __sfc__`（compileScript 的组件默认导出未带 export 前缀）
+ * 2. Sucrase 转译 TS/TSX（jsxRuntime automatic，import 语句原样保留为 ESM）
+ * 3. 相对导入 ../shared/* 改写为 @shared/*（runner 已做裸名重写）
+ */
+function compile(source: string): string {
+  let code = source;
+  if (activeVariantMeta.value.sfc) {
+    code = compileSfc(source);
+  }
+  const result = transform(code, {
+    transforms: ["typescript", "jsx"],
+    jsxRuntime: "automatic",
+    jsxImportSource: "react",
+    filePath: activeVariantMeta.value.file === "tsx" ? "example.tsx" : "example.ts",
+  });
+  return result.code.replace(/(from\s*|import\s*\(\s*)(["'])\.\.\/shared\//g, "$1$2@shared/");
+}
+
+// vue/compiler-sfc 模块缓存（ensureSfcCompiler 动态加载；SFC 变体编译用）
+let compilerSfcModule: typeof import("vue/compiler-sfc") | null = null;
+
+/** vue/compiler-sfc 按需加载（浏览器子路径构建，约 200KB，仅 vue3 SFC 变体首次运行时载入） */
+async function ensureSfcCompiler() {
+  if (!compilerSfcModule) {
+    compilerSfcModule = await import("vue/compiler-sfc");
   }
 }
 
-function showTip(message: string) {
-  tokenSavedTip.value = message;
-  if (tipTimer) clearTimeout(tipTimer);
-  tipTimer = setTimeout(() => {
-    tokenSavedTip.value = "";
-  }, 3000);
+/** SFC → 可运行 ESM：编译为组件模块后包一层 render(host) 外壳（runner 约定 default 为 render 函数） */
+function compileSfc(source: string): string {
+  const compiler = compilerSfcModule;
+  if (!compiler) throw new Error("vue/compiler-sfc 尚未加载");
+  const { descriptor, errors } = compiler.parse(source, { filename: "map-init.vue" });
+  if (errors.length > 0) {
+    throw new Error(errors.map((e: Error) => e.message).join("; "));
+  }
+  const out = compiler.compileScript(descriptor, { id: "playground", inlineTemplate: true });
+  // vue 3.5 起 inlineTemplate 输出已带 `export default`；旧版输出 `const __sfc__ =` 需补导出
+  const componentCode = /^\s*export default/m.test(out.content)
+    ? out.content.replace(/^\s*export default/m, "const __sfc__ =")
+    : out.content;
+  // runner 约定模块 default 为 render(container) => 清理函数；
+  // 把 SFC 组件挂载进容器，卸载时 unmount（响应式状态随组件销毁自动清理）。
+  // createApp 从 vue 具名导入（编辑器示例代码可能没导入它，外壳自己补）
+  return `import { createApp as __createApp } from "vue";
+${componentCode}
+export default function render(container) {
+  // 不改写容器（#map-host）行内样式：runner.html 以 position:absolute;inset:0
+  // 撑满它，改写 position:relative 会失去 inset 撑开效果导致高度塌陷为 0
+  const mountEl = document.createElement("div");
+  mountEl.style.cssText = "width:100%;height:100%;";
+  container.appendChild(mountEl);
+  const app = __createApp(__sfc__);
+  app.mount(mountEl);
+  return () => {
+    app.unmount();
+    mountEl.remove();
+  };
+}
+`;
 }
 
-function refreshIframe() {
-  iframeKey.value++;
+let runSeq = 0;
+let pendingRun: { id: number; code: string } | null = null;
+
+function onIframeLoad() {
+  const run = pendingRun;
+  const iframe = iframeRef.value;
+  if (!run || !iframe || run.id !== runSeq) return;
+  pendingRun = null;
+  iframe.contentWindow?.postMessage(
+    { type: "run", id: run.id, code: run.code },
+    window.location.origin,
+  );
+}
+async function runCode() {
+  const view = editor.value;
+  if (!view) return;
+  const runId = ++runSeq;
+  const source = view.state.doc.toString();
+  let code: string;
+  try {
+    if (activeVariantMeta.value.sfc) await ensureSfcCompiler();
+    code = compile(source);
+  } catch (error) {
+    message.error(`编译失败：${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  if (runId !== runSeq) return;
+  pendingRun = { id: runId, code };
+  iframeKey.value += 1;
 }
 
 async function copySource() {
-  if (!source.value) return;
+  const view = editor.value;
+  if (!view) return;
+  const text = view.state.doc.toString();
   try {
     if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(source.value);
+      await navigator.clipboard.writeText(text);
     } else {
       const textarea = document.createElement("textarea");
-      textarea.value = source.value;
-      textarea.style.cssText = "position:fixed;opacity:0;";
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand("copy");
       textarea.remove();
     }
     copied.value = true;
-    if (copyTimer) clearTimeout(copyTimer);
-    copyTimer = setTimeout(() => {
+    window.setTimeout(() => {
       copied.value = false;
     }, 2000);
   } catch {
-    /* 复制失败静默忽略 */
+    message.error("复制失败，请手动选择代码复制");
   }
 }
 
-watch([activeVariant, activeId], () => {
-  loadSource();
+async function resetSource() {
+  const view = editor.value;
+  if (!view) return;
+  view.dispatch({
+    changes: { from: 0, to: view.state.doc.length, insert: initialSource.value },
+  });
+  runCode();
+  message.info("已还原为初始代码并重新运行");
+}
+
+/** NSplit size 取值：px 字符串或 0~1 比例。把 size 换算为地图 pane 的 px 宽 */
+function sizeToMapPx(size: number | string, totalPx: number): number {
+  if (typeof size === "string") {
+    const px = Number.parseFloat(size);
+    return Number.isNaN(px) ? totalPx : totalPx - px - 3;
+  }
+  return totalPx * (1 - size);
+}
+
+/** 把地图 pane 的 px 宽换算回 NSplit size（px 字符串形式，指第一 pane 宽） */
+function mapPxToSize(mapPx: number): string {
+  return `${Math.max(Math.round(mapPx), 0)}px`;
+}
+
+/**
+ * 拖动中限制代码编辑器最小宽度：代码区不足 CODE_MIN_WIDTH 时钳制 size。
+ * size 语义为第一 pane（地图）宽度，故地图最大 = 总宽 - 代码最小宽。
+ */
+function onSplitSize(size: number | string) {
+  const splitEl = document.querySelector<HTMLElement>(".playground__split");
+  if (!splitEl) {
+    splitSize.value = size as number;
+    return;
+  }
+  const totalPx = splitEl.getBoundingClientRect().width - 3; // 减去分隔条宽
+  const codePx = totalPx - sizeToMapPx(size, totalPx);
+  if (codePx < CODE_MIN_WIDTH) {
+    splitSize.value = mapPxToSize(totalPx - CODE_MIN_WIDTH);
+  } else {
+    splitSize.value = size as number;
+  }
+}
+
+function onDragStart() {
+  dragging.value = true;
+}
+
+function onDragEnd() {
+  dragging.value = false;
+}
+
+/**
+ * 关键：拖动防抖遮罩必须在 mousedown 按下时就位，而不是等 NSplit 的 drag-start 回调
+ * （回调触发时第一帧 mousemove 已可能进入 iframe 被吞）。因此在 document 捕获阶段
+ * 监听 mousedown，命中分隔条立即点亮遮罩；mouseup（含拖出窗口松开）时熄灭。
+ */
+function installDragShield(): () => void {
+  const onDown = (event: MouseEvent) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest?.(".n-split__resize-trigger-wrapper")) {
+      dragging.value = true;
+    }
+  };
+  const onUp = () => {
+    dragging.value = false;
+  };
+  document.addEventListener("mousedown", onDown, true);
+  document.addEventListener("mouseup", onUp, true);
+  return () => {
+    document.removeEventListener("mousedown", onDown, true);
+    document.removeEventListener("mouseup", onUp, true);
+  };
+}
+
+// CodeMirror Ctrl+Enter 运行（优先级高于编辑器默认绑定）
+const runKeymap = Prec.highest(
+  keymap.of([
+    {
+      key: "Ctrl-Enter",
+      preventDefault: true,
+      run: () => {
+        runCode();
+        return true;
+      },
+    },
+  ]),
+);
+
+function mountEditor(initial: string) {
+  if (!editorHost.value) return;
+  editor.value = new EditorView({
+    doc: initial,
+    extensions: [
+      runKeymap,
+      basicSetup,
+      editorLanguage.value,
+      EditorView.theme({}, { dark: document.documentElement.classList.contains("dark") }),
+    ],
+    parent: editorHost.value,
+  });
+}
+
+/** 编辑器语言扩展：vue3 变体用 html（嵌套 script TS 高亮），其余 JS/TS */
+const editorLanguage = computed(() =>
+  activeVariantMeta.value.sfc
+    ? html({ selfClosingTags: true, matchClosingTags: true })
+    : javascript({ typescript: true, jsx: true }),
+);
+
+// 语言切换时重建编辑器：CodeMirror 语言扩展不支持运行中替换，需重挂载
+watch([activeVariant, activeId], async () => {
+  const source = await loadSource();
+  initialSource.value = source;
+  rebuildEditor(source);
 });
 
+function rebuildEditor(source: string) {
+  const view = editor.value;
+  if (view) {
+    view.destroy();
+    editor.value = null;
+  }
+  mountEditor(source);
+}
+
+onMounted(async () => {
+  // URL ?frame= 回填语言
+  const frame = new URLSearchParams(window.location.search).get("frame");
+  if (frame && variants.some((v) => v.id === frame)) {
+    activeVariant.value = frame as Variant["id"];
+  }
+  // SFC 变体首次运行需要 compiler-sfc（约 200KB 按需加载），
+  // 必须先 ensureSfcCompiler 再编译，否则初始 runCode 直接报"尚未加载"
+  if (activeVariantMeta.value.sfc) await ensureSfcCompiler();
+  const source = await loadSource();
+  initialSource.value = source;
+  mountEditor(source);
+  // 初始运行一次
+  runCode();
+});
+
+let disposeShield: (() => void) | null = null;
+
 onMounted(() => {
-  const params = new URLSearchParams(window.location.search);
-  const fromUrl = params.get("ex");
-  if (fromUrl) activeId.value = getCategorizedExample(fromUrl).id;
-  const frame = params.get("frame");
-  if (frame && variants.some((v) => v.id === frame)) activeVariant.value = frame as VariantId;
-  readToken();
-  loadSource();
+  disposeShield = installDragShield();
+});
+
+onBeforeUnmount(() => {
+  pendingRun = null;
+  disposeShield?.();
+  editor.value?.destroy();
+  editor.value = null;
 });
 </script>
 
-<template>
-  <div class="playground">
-    <aside class="playground__menu">
-      <div v-for="category in categories" :key="category.id" class="playground__category">
-        <div class="playground__category-title">{{ category.title }}</div>
-        <button
-          v-for="id in category.examples"
-          :key="id"
-          type="button"
-          class="playground__item"
-          :class="{ 'playground__item--active': activeId === id }"
-          @click="selectExample(id)"
-        >
-          {{ id }}
-        </button>
-      </div>
-    </aside>
-
-    <section class="playground__main">
-      <div class="playground__head">
-        <div class="playground__info">
-          <h3 class="playground__title">{{ current.meta.title }}</h3>
-          <p class="playground__desc">{{ current.meta.description }}</p>
-          <div class="playground__apis">
-            <span v-for="api in current.meta.apis" :key="api" class="playground__api">{{
-              api
-            }}</span>
-          </div>
-        </div>
-        <div class="playground__toolbar">
-          <span class="playground__token">
-            <code v-if="token">{{ token.slice(0, 6) }}…{{ token.slice(-4) }}</code>
-            <code v-else>未配置 token</code>
-          </span>
-          <button type="button" class="playground__btn" @click="setToken">设置 token</button>
-          <button type="button" class="playground__btn" @click="refreshIframe">刷新预览</button>
-          <span v-if="tokenSavedTip" class="playground__tip">{{ tokenSavedTip }}</span>
-        </div>
-      </div>
-
-      <div class="playground__tabs">
-        <button
-          v-for="v in variants"
-          :key="v.id"
-          type="button"
-          class="playground__tab"
-          :class="{ 'playground__tab--active': activeVariant === v.id }"
-          @click="
-            activeVariant = v.id;
-            syncUrl();
-          "
-        >
-          {{ v.label }}
-        </button>
-      </div>
-
-      <div class="playground__body">
-        <iframe
-          :key="`${activeVariant}-${activeId}-${iframeKey}`"
-          class="playground__iframe"
-          :src="iframeSrc"
-          :title="`${current.meta.title} · ${variantFile.label} 预览`"
-          loading="lazy"
-        />
-        <div class="playground__code">
-          <div class="playground__code-head">
-            <code class="playground__code-path">{{ sourcePath }}</code>
-            <button type="button" class="playground__btn" @click="copySource">
-              {{ copied ? "已复制 ✓" : "复制源码" }}
-            </button>
-          </div>
-          <pre class="playground__pre"><code>{{ source }}</code></pre>
-        </div>
-      </div>
-    </section>
-  </div>
-</template>
-
 <style scoped>
-/*
- * 双模式布局：
- * - ≥960px：layout: page + .playground-page（custom.css）提供满屏定位上下文，
- *   本组件绝对定位铺满，头部/Tab/菜单定高，body 弹性填充，各区域内部滚动（应用式满屏）。
- * - <960px：降级为文档流自然高度，上下堆叠 + 页面滚动。
- */
 .playground {
+  position: absolute;
+  inset: 0;
   display: flex;
-  gap: 16px;
-  align-items: stretch;
-  margin: 20px 0;
-  min-height: 640px;
+  flex-direction: column;
+  min-height: 0;
 }
 
-@media (min-width: 960px) {
-  .playground {
-    position: absolute;
-    inset: 0;
-    /* 左右贴边：不居中、不限宽；12px 内边距仅避免边框贴死屏幕边缘 */
-    margin: 0;
-    padding: 0 12px;
-    min-height: 0;
-  }
+.playground :deep(.n-layout) {
+  height: 100%;
+  background: transparent;
 }
 
-/* 左侧分类菜单 */
+.playground__shell {
+  height: 100%;
+}
+
+/* 左侧菜单 */
 .playground__menu {
-  width: 200px;
-  flex: none;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 14px 10px;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  background: var(--vp-c-bg-soft);
-  align-self: flex-start;
-  position: sticky;
-  top: calc(var(--vp-nav-height, 64px) + 16px);
-  max-height: calc(100vh - var(--vp-nav-height, 64px) - 32px);
-  overflow: auto;
-}
-
-@media (min-width: 960px) {
-  .playground__menu {
-    position: static;
-    align-self: stretch;
-    max-height: none;
-    overflow-y: auto;
-    margin-bottom: 2px;
-  }
-}
-
-.playground__category {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  height: 100%;
+  padding: 12px 8px;
+  overflow-y: auto;
 }
 
 .playground__category-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--vp-c-text-2);
-  letter-spacing: 0.06em;
-  padding: 0 8px 4px;
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--vp-c-text-3);
+  text-transform: uppercase;
+  user-select: none;
 }
 
 .playground__item {
-  text-align: left;
-  padding: 6px 10px;
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: var(--vp-c-text-1);
   font-size: 13px;
+  text-align: left;
   cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .playground__item:hover {
-  background: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand-1);
+  background: var(--vp-c-bg-soft);
 }
 
 .playground__item--active {
@@ -337,220 +604,125 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* 右侧内容区 */
+/* 右侧主区：整体只承载 split，不出现额外滚动 */
 .playground__main {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.playground__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
+/* 分栏：地图 | 代码，撑满主区剩余高度 */
+.playground__split {
+  flex: 1;
+  min-height: 0;
 }
 
-.playground__title {
-  margin: 0;
-  font-size: 17px;
-  border-top: none;
-  padding-top: 0;
+/* 地图 pane */
+.playground__map {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 4px;
 }
 
-.playground__desc {
-  margin: 4px 0 6px;
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--vp-c-text-2);
-}
-
-.playground__apis {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.playground__api {
-  font-size: 11px;
-  font-family: var(--vp-font-family-mono);
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--vp-c-divider);
-  color: var(--vp-c-text-2);
-  background: var(--vp-c-bg);
-}
-
-.playground__toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--vp-c-text-2);
-}
-
-.playground__tip {
-  font-size: 12px;
-  color: var(--vp-c-brand-1);
-}
-
-/* 框架 Tab */
-.playground__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.playground__tab {
-  padding: 6px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg-soft);
-  color: var(--vp-c-text-2);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.playground__tab:hover {
-  border-color: var(--vp-c-brand-1);
-  color: var(--vp-c-brand-1);
-}
-
-.playground__tab--active {
-  border-color: var(--vp-c-brand-1);
-  background: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand-1);
-}
-
-/* 预览 + 代码分栏 */
-.playground__body {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 12px;
-  align-items: stretch;
+/* 拖动遮罩：盖住 iframe，防止鼠标进入 iframe 后 mousemove 被吞导致拖动中断 */
+.playground__map-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: transparent;
 }
 
 .playground__iframe {
   width: 100%;
-  height: 560px;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  background: #0a1210;
+  height: 100%;
+  border: none;
+  background: var(--vp-c-bg);
 }
 
-@media (min-width: 960px) {
-  .playground__body {
-    flex: 1;
-    min-height: 0;
-  }
-
-  .playground__iframe {
-    height: 100%;
-    min-height: 0;
-  }
-}
-
+/* 代码 pane：描述区 + 头部 + 编辑器，纵向 flex，总高即 pane 高度 */
 .playground__code {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 10px;
-  overflow: hidden;
+  height: 100%;
+  min-height: 0;
   min-width: 0;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+/* 描述区：位于代码编辑器上方，自然流高度，占用代码容器（编辑器）的高度 */
+.playground__desc {
+  flex-shrink: 0;
+  padding: 10px 14px 6px;
+}
+
+.playground__desc h3 {
+  margin: 0 0 2px;
+  font-size: 14px;
+  color: var(--vp-c-text-1);
+}
+
+.playground__desc p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--vp-c-text-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .playground__code-head {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--vp-c-divider);
   background: var(--vp-c-bg-soft);
 }
 
 .playground__code-path {
-  font-size: 11.5px;
-  color: var(--vp-c-text-2);
   overflow: hidden;
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+  font-family: var(--vp-font-family-mono);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.playground__pre {
+.playground__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.playground__editor {
   flex: 1;
-  margin: 0;
+  min-height: 0;
   overflow: auto;
-  max-height: 560px;
-  padding: 12px 14px;
-  background: var(--vp-code-block-bg, #161618);
-  color: var(--vp-code-block-color, #ddd);
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 13px;
+}
+
+.playground__editor :deep(.cm-editor) {
+  height: 100%;
+}
+
+.playground__editor :deep(.cm-scroller) {
   font-family: var(--vp-font-family-mono);
-  white-space: pre;
 }
 
-@media (min-width: 960px) {
-  .playground__pre {
-    /* code 容器 overflow:hidden + pre flex:1 已经约束了高度，
-       去掉 max-height 让源码面板跟随剩余空间而非被裁掉 */
-    max-height: none;
-    min-height: 0;
-  }
-
-  /* grid 子项默认 min-height:auto，内容较长时会把面板撑破容器 */
-  .playground__code,
-  .playground__iframe {
-    min-height: 0;
-  }
-}
-
-.playground__btn {
-  padding: 4px 12px;
-  font-size: 12px;
-  border-radius: 6px;
-  border: 1px solid var(--vp-c-brand-1);
-  background: transparent;
-  color: var(--vp-c-brand-1);
-  cursor: pointer;
-  flex: none;
-  transition: all 0.15s ease;
-}
-
-.playground__btn:hover {
-  background: var(--vp-c-brand-soft);
-}
-
-/* 窄屏：上下堆叠 + 菜单横排（app-shell 定位整体失效，恢复文档流） */
+/* 窄屏降级：文档流布局 */
 @media (max-width: 959px) {
   .playground {
-    flex-direction: column;
-  }
-
-  .playground__menu {
     position: static;
-    width: 100%;
-    max-height: none;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .playground__category {
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .playground__body {
-    grid-template-columns: 1fr;
+    min-height: 80vh;
   }
 }
 </style>

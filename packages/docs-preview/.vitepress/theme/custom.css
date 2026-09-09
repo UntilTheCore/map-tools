@@ -39,12 +39,8 @@
     flex: 1;
   }
 
-  /* app-shell 铺满时隐藏 md 说明段落与组件内 h3 标题，避免与正文重叠 */
+  /* app-shell 铺满时隐藏 md 说明段落，避免与正文重叠 */
   .playground-page .VPPage > div:first-child > div > p {
-    display: none;
-  }
-
-  .playground-page .playground__info h3 {
     display: none;
   }
 }

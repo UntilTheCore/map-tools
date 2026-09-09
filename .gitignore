@@ -10,6 +10,7 @@ node_modules/.vite
 packages/docs-preview/.vitepress/cache
 packages/docs-preview/.vitepress/dist
 packages/docs-preview/public/demos
+packages/docs-preview/public/runner/vendor
 packages/docs-preview/examples/public/vendor
 
 # ai folder
@@ -18,3 +19,4 @@ packages/docs-preview/examples/public/vendor
 .claude
 .trae
 .zcode
+packages/docs-preview/examples/.vendor-wrappers

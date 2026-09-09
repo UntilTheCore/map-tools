@@ -1,11 +1,11 @@
 /**
- * 示例共享 UI 工具：无 token 占位面板、示例状态条、控制条、日志面板。
- * 纯 DOM 实现，不依赖任何框架，四个变体通用。
+ * 示例共享 UI 工具：状态条、控制条、日志面板、错误面板。
+ * 纯 DOM 实现，不依赖任何框架，四个语言变体通用。
  */
-import { resolveToken, saveToken, TOKEN_STORAGE_KEY } from "./loadMinemap";
 
 export interface RenderOptions {
-  token?: string;
+  /** minemap key；示例代码通常不传，由 loadMinemap 的系统 key 兜底 */
+  key?: string;
 }
 
 export type ExampleRender = (container: HTMLElement, options: RenderOptions) => () => void;
@@ -111,52 +111,7 @@ export function createLogPanel(container: HTMLElement, title = "事件日志") {
   };
 }
 
-/** 无 token 占位面板：不初始化地图，提供设置入口 */
-export function renderNoTokenPanel(container: HTMLElement, title: string) {
-  styleHost(container);
-  const panel = document.createElement("div");
-  panel.style.cssText = [
-    "position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;",
-    "background:radial-gradient(1200px 600px at 50% 0%, rgba(77,224,139,.08), transparent), #0a1210;",
-    "color:#cdeee0;text-align:center;padding:24px;",
-  ].join("");
-  const badge = document.createElement("div");
-  badge.textContent = title;
-  badge.style.cssText =
-    "font-size:13px;letter-spacing:.12em;color:#4de08b;text-transform:uppercase;";
-  const h = document.createElement("div");
-  h.textContent = "未配置 minemap token";
-  h.style.cssText = "font-size:20px;font-weight:700;color:#eafff5;";
-  const p = document.createElement("div");
-  p.textContent =
-    "配置 token 后可见真实地图效果。请通过示例 URL 追加 ?token=xxx 或点击下方按钮设置。";
-  p.style.cssText = "max-width:520px;font-size:13px;line-height:1.7;color:#9fc7b4;";
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "demo-btn";
-  btn.textContent = "设置 token";
-  btn.addEventListener("click", () => {
-    const current = resolveToken();
-    const input = window.prompt(
-      "请输入 minemap token（将写入 localStorage 的 MINEMAP_TOKEN）：",
-      current ?? "",
-    );
-    if (input !== null && input.trim()) {
-      saveToken(input.trim());
-      window.location.reload();
-    }
-  });
-  const hint = document.createElement("div");
-  hint.textContent = `读取顺序：URL ?token= 参数 → localStorage.${TOKEN_STORAGE_KEY}`;
-  hint.style.cssText = "font-size:11px;color:#5e8c77;font-family:ui-monospace,Consolas,monospace;";
-  panel.append(badge, h, p, btn, hint);
-  container.appendChild(panel);
-  return () => {
-    panel.remove();
-  };
-}
-
-/** 渲染错误面板（SDK 加载失败 / 地图初始化失败） */
+/** 渲染错误面板（SDK 加载失败 / 地图初始化失败 / key 未配置） */
 export function renderErrorPanel(container: HTMLElement, message: string, retry?: () => void) {
   styleHost(container);
   const panel = document.createElement("div");

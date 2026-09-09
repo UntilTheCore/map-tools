@@ -5,10 +5,9 @@
  */
 import Vue from "vue2";
 import { createMinemapMap } from "../shared/loadMinemap";
-import { renderNoTokenPanel, styleHost, type RenderOptions } from "../shared/demo";
+import { styleHost, type RenderOptions } from "../shared/demo";
 
 const Demo = Vue.extend({
-  props: { token: { type: String, default: "" } },
   data() {
     return {
       status: "等待挂载（mounted 中创建地图）",
@@ -17,13 +16,12 @@ const Demo = Vue.extend({
     };
   },
   mounted() {
-    if (!this.token) return; // 无 token 时渲染占位面板，不初始化地图
     let disposed = false;
     this.setDisposed = () => {
       disposed = true;
     };
     this.status = "SDK 加载中，创建 minemap.Map…";
-    createMinemapMap(this.$refs.host as HTMLElement, this.token)
+    createMinemapMap(this.$refs.host as HTMLElement)
       .then((map) => {
         if (disposed) {
           map.remove(); // 组件已销毁，直接释放
@@ -59,17 +57,10 @@ const Demo = Vue.extend({
   },
 });
 
-export default function render(container: HTMLElement, options: RenderOptions): () => void {
+export default function render(container: HTMLElement, _options: RenderOptions): () => void {
   styleHost(container);
-  if (!options.token) {
-    const clean = renderNoTokenPanel(container, "地图初始化");
-    return () => {
-      clean();
-      container.innerHTML = "";
-    };
-  }
   const vm = new Vue({
-    render: (h) => h(Demo, { props: { token: options.token } }),
+    render: (h) => h(Demo),
   }).$mount();
   container.appendChild(vm.$el);
   return () => {

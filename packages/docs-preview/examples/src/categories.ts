@@ -3,8 +3,6 @@
  *
  * 与 registry 的关系：分类只引用 registry 中已有的示例 id，不重复维护元信息；
  * 新示例先在 registry 注册 meta，再挂进对应分类。
- * 注意：旧示例 init（底图初始化与销毁）的职责已拆分为 map-init / map-destroy，
- * 全量改造吸收旧示例后再从 registry 移除。
  */
 import { registry, type ExampleMeta } from "./registry";
 
@@ -19,27 +17,7 @@ export const exampleCategories: ExampleCategory[] = [
   {
     id: "map",
     title: "地图",
-    examples: ["map-init", "map-destroy", "map-state", "viewport-zoom"],
-  },
-  {
-    id: "layers",
-    title: "数据与图层",
-    examples: ["layer-visibility", "pbf-layer"],
-  },
-  {
-    id: "overlays",
-    title: "覆盖物与弹窗",
-    examples: ["marker-clean", "popup"],
-  },
-  {
-    id: "framework",
-    title: "框架接入",
-    examples: ["use-map-events"],
-  },
-  {
-    id: "geometry",
-    title: "几何工具",
-    examples: ["geo-tools"],
+    examples: ["map-init"],
   },
 ];
 

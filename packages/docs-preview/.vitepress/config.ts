@@ -2,9 +2,9 @@ import { defineConfig } from "vitepress";
 
 /**
  * @ym/map-tools 文档站配置
- * - 站点导航：首页 / 指南 / API 参考 / 示例中心
- * - demos（四框架示例）由 build:demos 预构建到 public/demos，
- *   dev 与 build 均通过 /demos/{variant}.html 访问
+ * - 站点导航：首页 / 指南 / API 参考 / 示例实验室
+ * - 示例实验室的编辑代码在 /runner.html 中运行（import map 解析本地
+ *   public/runner/vendor 预打包产物，由 build:runner-vendor 产出）
  */
 export default defineConfig({
   title: "@ym/map-tools",
@@ -22,7 +22,11 @@ export default defineConfig({
       { text: "首页", link: "/" },
       { text: "指南", link: "/guide/getting-started" },
       { text: "API 参考", link: "/api/overview" },
-      { text: "示例中心", link: "/examples-center/", activeMatch: "^/examples-center/" },
+      {
+        text: "示例实验室",
+        link: "/examples-center/playground",
+        activeMatch: "^/examples-center/",
+      },
     ],
     sidebar: {
       "/guide/": [
@@ -57,12 +61,8 @@ export default defineConfig({
       ],
       "/examples-center/": [
         {
-          text: "示例中心",
-          items: [
-            { text: "示例实验室（预览+复制）", link: "/examples-center/playground" },
-            { text: "示例列表", link: "/examples-center/" },
-            { text: "示例详情（iframe 预览）", link: "/examples-center/example" },
-          ],
+          text: "示例实验室",
+          items: [{ text: "地图初始化（可编辑运行）", link: "/examples-center/playground" }],
         },
       ],
     },

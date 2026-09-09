@@ -5,17 +5,16 @@
 import { createRoot } from "react-dom/client";
 import { useEffect, useRef, useState } from "react";
 import { createMinemapMap } from "../shared/loadMinemap";
-import { renderNoTokenPanel, styleHost, type RenderOptions } from "../shared/demo";
+import { styleHost, type RenderOptions } from "../shared/demo";
 
-function Demo({ token }: { token: string }) {
+function Demo() {
   const hostRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState("等待挂载（useEffect 中创建地图）");
 
   useEffect(() => {
-    if (!token) return; // 无 token 时渲染占位面板，不初始化地图
     let disposed = false;
     setStatus("SDK 加载中，创建 minemap.Map…");
-    createMinemapMap(hostRef.current!, token)
+    createMinemapMap(hostRef.current!)
       .then((map) => {
         if (disposed) {
           map.remove(); // 组件已卸载，直接释放
@@ -36,7 +35,7 @@ function Demo({ token }: { token: string }) {
       // 本示例 createMinemapMap 内部持有实例，这里通过重渲染容器兜底释放。
       if (hostRef.current) hostRef.current.innerHTML = "";
     };
-  }, [token]);
+  }, []);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -51,16 +50,9 @@ function Demo({ token }: { token: string }) {
   );
 }
 
-export default function render(container: HTMLElement, options: RenderOptions): () => void {
+export default function render(container: HTMLElement, _options: RenderOptions): () => void {
   styleHost(container);
-  if (!options.token) {
-    const clean = renderNoTokenPanel(container, "地图初始化");
-    return () => {
-      clean();
-      container.innerHTML = "";
-    };
-  }
   const root = createRoot(container);
-  root.render(<Demo token={options.token} />);
+  root.render(<Demo />);
   return () => root.unmount();
 }

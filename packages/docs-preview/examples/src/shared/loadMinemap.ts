@@ -6,40 +6,20 @@
  * - 示例默认参数：solution 222609、center [106.55, 29.56]（重庆）、
  *   私有 MapStyleServer styleJSON（key 内嵌于 URL，见 createMinemapMap）
  *
- * token 获取顺序：URL ?token= -> localStorage MINEMAP_TOKEN
+ * key 由系统统一提供（SYSTEM_MINEMAP_KEY），用户无需手动配置。
  */
 import type {} from "@ym/map-tools/minemap";
 
 export const MINEMAP_CDN_MAIN = "https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.js";
 export const MINEMAP_CSS = "https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.css";
+const MINEMAP_INIT_TIMEOUT_MS = 15_000;
 
-export const TOKEN_STORAGE_KEY = "MINEMAP_TOKEN";
-
-/** 读取 token：URL ?token= 优先，其次 localStorage（并回写） */
-export function resolveToken(): string | null {
-  const fromUrl = new URLSearchParams(window.location.search).get("token");
-  if (fromUrl) {
-    try {
-      localStorage.setItem(TOKEN_STORAGE_KEY, fromUrl);
-    } catch {
-      /* ignore */
-    }
-    return fromUrl;
-  }
-  try {
-    return localStorage.getItem(TOKEN_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function saveToken(token: string): void {
-  try {
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
-  } catch {
-    /* ignore */
-  }
-}
+/**
+ * 系统级 minemap key（由部署方统一提供）。
+ * TODO: 在此填入真实 key；为空时 createMinemapMap 快速失败，
+ * 由调用方展示「系统 key 未配置」提示。
+ */
+export const SYSTEM_MINEMAP_KEY = "52c2a1dac4e04498bb9d32cb830f29a4";
 
 let loadingPromise: Promise<typeof minemap> | null = null;
 
@@ -100,7 +80,7 @@ export function loadMinemap(): Promise<typeof minemap> {
  * 初始化 minemap 全局配置（domainUrl / spriteUrl / serviceUrl / key / solution），
  * 依据私有部署环境与示例中心约定。
  */
-export function setupMinemapGlobals(token: string): typeof minemap {
+export function setupMinemapGlobals(key: string): typeof minemap {
   const m = window.minemap;
   if (!m) throw new Error("minemap SDK 尚未加载");
   m.domainUrl = "https://gmap.cqphx.cn:4443";
@@ -108,28 +88,75 @@ export function setupMinemapGlobals(token: string): typeof minemap {
   m.serverDomainUrl = "https://gmap.cqphx.cn:4443";
   m.spriteUrl = "https://gmap.cqphx.cn:4443/minemapapi/v3.3.0/sprite/sprite";
   m.serviceUrl = "https://gmap.cqphx.cn:4443/service";
-  m.key = token;
-  m.solution = 222_609;
+  m.key = key;
+  m.solution = 222_546;
   return m;
 }
 
-/** 创建 minemap 地图实例，等待 load 事件后 resolve */
+/** 创建 minemap 地图实例，等待 load 事件后 resolve；key 缺省使用系统 key */
 export function createMinemapMap(
   container: HTMLElement,
-  token: string,
+  key: string = SYSTEM_MINEMAP_KEY,
   extra: Record<string, unknown> = {},
   onCreated?: (map: minemap.Map) => void,
 ): Promise<minemap.Map> {
+  if (!key) {
+    return Promise.reject(
+      new Error("系统 key 未配置：请在 loadMinemap.ts 的 SYSTEM_MINEMAP_KEY 中填入 minemap key"),
+    );
+  }
   return loadMinemap().then(
     (m) =>
       new Promise<minemap.Map>((resolve, reject) => {
-        setupMinemapGlobals(token);
+        setupMinemapGlobals(key);
         const containerId = `minemap-${Math.random().toString(36).slice(2)}`;
         const host = document.createElement("div");
         host.id = containerId;
         host.style.cssText = "width:100%;height:100%;position:relative;";
         container.appendChild(host);
         let map: minemap.Map | null = null;
+        let settled = false;
+        let timeoutId: number | null = null;
+
+        const cleanupFailedMap = () => {
+          if (timeoutId !== null) {
+            window.clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+          if (map) {
+            map.off("load", onLoad);
+            map.off("error", onError);
+            map.remove();
+            map = null;
+          }
+          host.remove();
+        };
+
+        const fail = (error: unknown) => {
+          if (settled) return;
+          settled = true;
+          cleanupFailedMap();
+          reject(error instanceof Error ? error : new Error(String(error)));
+        };
+
+        const onLoad = () => {
+          if (settled) return;
+          settled = true;
+          if (timeoutId !== null) {
+            window.clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+          map?.off("load", onLoad);
+          map?.off("error", onError);
+          resolve(map as minemap.Map);
+        };
+
+        const onError = (e: minemap.MapEventMap["error"]) => {
+          if (settled || isToleratedStyleError(e)) return;
+          fail(
+            new Error(`底图加载失败（key 无效或无权限）: ${e.error ? String(e.error) : String(e)}`),
+          );
+        };
         try {
           map = new m.Map({
             container: containerId,
@@ -146,39 +173,39 @@ export function createMinemapMap(
             ...extra,
           });
         } catch (error: unknown) {
-          reject(new Error(`minemap.Map 创建失败: ${getErrorMessage(error)}`));
+          fail(new Error(`minemap.Map 创建失败: ${getErrorMessage(error)}`));
           return;
         }
         try {
           onCreated?.(map);
         } catch (error: unknown) {
-          map.remove();
-          reject(new Error(`minemap.Map 初始化回调失败: ${getErrorMessage(error)}`));
+          fail(new Error(`minemap.Map 初始化回调失败: ${getErrorMessage(error)}`));
           return;
         }
-        let settled = false;
-        const onLoad = () => {
-          if (settled) return;
-          settled = true;
-          resolve(map as minemap.Map);
-        };
-        const onError = (e: minemap.MapEventMap["error"]) => {
-          if (settled) return;
-          settled = true;
-          reject(
-            new Error(
-              `底图加载失败（token 无效或无权限）: ${e.error ? String(e.error) : String(e)}`,
-            ),
-          );
-        };
         map.on("load", onLoad);
         map.on("error", onError);
+        timeoutId = window.setTimeout(() => {
+          fail(new Error(`minemap 地图加载超时（${MINEMAP_INIT_TIMEOUT_MS}ms）`));
+        }, MINEMAP_INIT_TIMEOUT_MS);
       }),
   );
 }
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * 逐图层样式错误白名单：styleJSON 引用了矢量服务中不存在的 source-layer 时，
+ * minemap 仅跳过该图层、不中断整体渲染（实测 load 仍触发、其余图层正常出图），
+ * 故此类错误不计为初始化失败。服务端修复 styleJSON（补齐 / 移除 gis_geo_motorway
+ * 引用）后可移除此项。
+ */
+const TOLERATED_STYLE_ERRORS = [/Source layer "gis_geo_motorway" does not exist/];
+
+function isToleratedStyleError(e: minemap.MapEventMap["error"]): boolean {
+  const text = String(e.error ?? e);
+  return TOLERATED_STYLE_ERRORS.some((re) => re.test(text));
 }
 
 function getLoadedMinemap(): typeof minemap {

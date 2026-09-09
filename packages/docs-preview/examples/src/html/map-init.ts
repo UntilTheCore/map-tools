@@ -3,17 +3,10 @@
  * 关键点：地图实例由局部变量持有，容器被移除时同步 remove() 释放。
  */
 import { createMinemapMap } from "../shared/loadMinemap";
-import { renderNoTokenPanel, styleHost, type RenderOptions } from "../shared/demo";
+import { styleHost, type RenderOptions } from "../shared/demo";
 
 export default function render(container: HTMLElement, options: RenderOptions): () => void {
   styleHost(container);
-  if (!options.token) {
-    const clean = renderNoTokenPanel(container, "地图初始化");
-    return () => {
-      clean();
-      container.innerHTML = "";
-    };
-  }
   const host = document.createElement("div");
   host.style.cssText = "position:absolute;inset:0;";
   container.appendChild(host);
@@ -26,7 +19,7 @@ export default function render(container: HTMLElement, options: RenderOptions): 
   let map: minemap.Map | null = null;
   let disposed = false;
 
-  createMinemapMap(host, options.token)
+  createMinemapMap(host, options.key)
     .then((created) => {
       if (disposed) {
         created.remove(); // 容器已释放，直接销毁

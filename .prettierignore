@@ -11,3 +11,4 @@ packages/docs-preview/examples/public
 # 锁文件与工具目录
 pnpm-lock.yaml
 .husky/_
+packages/docs-preview/examples/.vendor-wrappers

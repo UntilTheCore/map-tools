@@ -2,28 +2,40 @@
   "name": "docs-preview",
   "version": "1.0.0",
   "private": true,
-  "description": "@ym/map-tools 文档站与示例中心（VitePress + 四框架交互式预览）",
+  "description": "@ym/map-tools 文档站与示例实验室（VitePress + CodeMirror 可编辑运行预览）",
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p examples/tsconfig.json",
-    "build:demos": "node scripts/copy-umd.mjs && vite build --config examples/vite.demos.config.ts && vite build --config examples/vite.demos.vue2.config.ts",
-    "dev": "pnpm run build:demos && vitepress dev --port 5173",
-    "build": "pnpm run build:demos && vitepress build",
+    "build:runner-vendor": "node scripts/build-runner-vendor.mjs",
+    "dev": "pnpm run build:runner-vendor && vitepress dev --port 5173",
+    "build": "pnpm run build:runner-vendor && vitepress build",
     "preview": "vitepress preview"
   },
+  "dependencies": {
+    "@vicons/ionicons5": "^0.13.0",
+    "@ym/map-tools": "workspace:*",
+    "naive-ui": "^2.45.3"
+  },
   "devDependencies": {
+    "@codemirror/autocomplete": "^6.18.6",
+    "@codemirror/lang-html": "^6.4.12",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/language": "^6.11.0",
+    "@codemirror/legacy-modes": "^6.5.0",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.8",
     "@types/geojson": "^7946.0.16",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "codemirror": "^6.0.2",
+    "esbuild": "^0.25.12",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "sucrase": "^3.35.1",
     "typescript": "^5.9.2",
     "vite": "^8.2.1",
     "vitepress": "^1.6.3",
     "vue": "^3.5.0",
     "vue2": "npm:vue@2.7.16"
-  },
-  "dependencies": {
-    "@ym/map-tools": "workspace:*"
   }
 }

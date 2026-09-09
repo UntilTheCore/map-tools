@@ -4,7 +4,7 @@
 
 ## 1. 项目概述
 
-pnpm monorepo，核心产物为 **@ym/map-tools**——基于 `@turf/turf` 与 JS SDK 的地图工具库，支持 Vue 2/3、React、原生 HTML（UMD）多框架接入，配套 VitePress 文档站与示例中心，以及技能包。
+pnpm monorepo，核心产物为 **@ym/map-tools**——基于 `@turf/turf` 与 JS SDK 的地图工具库，支持 Vue 2/3、React、原生 HTML（UMD）多框架接入，配套 VitePress 文档站与示例实验室，以及技能包。
 
 ```
 map-tools/                            # map-tools-monorepo（private，packageManager: pnpm@11.15.1）
@@ -17,17 +17,17 @@ map-tools/                            # map-tools-monorepo（private，packageMa
     ├── map-tools/                    # @ym/map-tools v3.0.0，插件工具库（Vite 库模式）
     ├── minemap-types/                # @ym/minemap-types v0.1.0，minemap SDK 全局类型（纯 .d.ts，无构建）
     ├── skills/                       # 技能包
-    └── docs-preview/                 # VitePress 1.x 文档站 + 四框架示例中心（private）
+    └── docs-preview/                 # VitePress 1.x 文档站 + 示例实验室（private）
 ```
 
 > 注：根级 `src/`、`lib/` 为历史同步产物，已删除（不再存在）；源码只认 `packages/` 下的文件。
 
-| 子项目                 | 包名              | 版本  | 职责                                                                                  |
-| ---------------------- | ----------------- | ----- | ------------------------------------------------------------------------------------- |
-| packages/map-tools     | @ym/map-tools     | 3.0.0 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                        |
-| packages/minemap-types | @ym/minemap-types | 0.1.0 | minemap SDK / minemaputil / minemap.edit 全局类型声明（唯一数据源，见 ADR 0001）      |
-| packages/skills        | map-tools-skills  | 0.1.0 | `packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）                   |
-| packages/docs-preview  | docs-preview      | 1.0.0 | VitePress 文档站 + 示例中心（vue3/vue2/react/html 四框架 Tab、iframe 预览、源码面板） |
+| 子项目                 | 包名              | 版本  | 职责                                                                                          |
+| ---------------------- | ----------------- | ----- | --------------------------------------------------------------------------------------------- |
+| packages/map-tools     | @ym/map-tools     | 3.0.0 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                                |
+| packages/minemap-types | @ym/minemap-types | 0.1.0 | minemap SDK / minemaputil / minemap.edit 全局类型声明（唯一数据源，见 ADR 0001）              |
+| packages/skills        | map-tools-skills  | 0.1.0 | `packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）                           |
+| packages/docs-preview  | docs-preview      | 1.0.0 | VitePress 文档站 + 示例实验室（naive-ui 布局、CodeMirror 可编辑源码、runner iframe 即时运行） |
 
 ## 2. 环境要求
 
@@ -36,8 +36,8 @@ map-tools/                            # map-tools-monorepo（private，packageMa
 - **私仓**：Verdaccio `http://192.168.3.180:4873`（根 .npmrc 已把 `@ym` scope 指向该地址）
 - **Windows 注意事项**：
   - 默认 shell 为 cmd，命令书写避免 POSIX 专属语法；`&&` 可用，不要依赖 `;`、反引号等
-  - 路径分隔符差异：跨目录复制、路径拼接一律使用 Node 脚本 + `node:path`（参照 [copy-umd.mjs](packages/docs-preview/scripts/copy-umd.mjs)），禁止写死反斜杠
-  - 根级 `src/`、`lib/` 已删除（历史产物）；`packages/*/dist`、`public/demos` 等为构建产物，修改源码请只进入 `packages/` 对应子项目
+  - 路径分隔符差异：跨目录复制、路径拼接一律使用 Node 脚本 + `node:path`，禁止写死反斜杠
+  - 根级 `src/`、`lib/` 已删除（历史产物）；`packages/*/dist`、`public/demos`、`public/runner/vendor` 等为构建产物，修改源码请只进入 `packages/` 对应子项目
 
 ## 3. 常用命令
 
@@ -54,7 +54,7 @@ pnpm install
 ```bash
 pnpm build                              # 仅构建 @ym/map-tools（= pnpm --filter @ym/map-tools build）
 pnpm --filter @ym/map-tools build       # 产出 dist/（es+cjs 四入口）+ dist/umd/index.umd.js + dist/types
-pnpm --filter docs-preview build:demos  # 复制 UMD 并构建四框架 demos → public/demos/
+pnpm --filter docs-preview build:runner-vendor  # esbuild 预打包运行时 vendor → public/runner/vendor/
 pnpm build:all                          # map-tools build + docs-preview build（发布前全量校验）
 ```
 
@@ -85,12 +85,12 @@ pnpm format:check                       # 仅校验格式，不写入
 **文档开发**
 
 ```bash
-pnpm dev:docs                           # = pnpm --filter docs-preview dev，端口 5173（含 demos 预构建）
-pnpm --filter docs-preview build        # demos + vitepress build
+pnpm dev:docs                           # = pnpm --filter docs-preview dev，端口 5173（含 runner vendor 预构建）
+pnpm --filter docs-preview build        # runner vendor + vitepress build
 pnpm --filter docs-preview preview      # vitepress preview
 ```
 
-> **首次运行 `pnpm dev:docs` 前需先 `pnpm build`**（或至少构建 `@ym/map-tools`）：docs-preview 的 `copy-umd` 脚本依赖 `@ym/map-tools` 的 `dist/umd` 产物，未构建时 demos 预构建会失败。
+> 示例实验室运行时（runner vendor）与 `@ym/map-tools` 库源码相互独立：vendor 由 esbuild 打包 docs-preview 自身依赖（vue/react 等）生成，不再依赖 map-tools 的 UMD 产物。
 
 **发布**
 
@@ -175,17 +175,16 @@ src/
   - JS 主 CDN（实测 200）：`https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.js`
   - CSS：`https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.css`
 - SDK 类型由独立包 **@ym/minemap-types** 提供（`packages/minemap-types/index.d.ts`，自包含单文件，禁止反向引用 `@ym/map-tools`）：`namespace minemap`（Map/Popup/Marker/LngLat/控件/事件等）+ `minemaputil` + `minemap.edit` + `minemap.lbsUtil`；map-tools 的 `src/types/minemap.d.ts` 仅为薄入口（`import type {} from "@ym/minemap-types"`），`@ym/map-tools/minemap` 子路径与 `/// <reference types="@ym/map-tools/minemap" />` 均经此链激活（实测：reference types 指令支持带 scope 的包解析，非仅限 `node_modules/@types/`）
-- docs-preview 示例中心使用 [examples/src/shared/loadMinemap.ts](packages/docs-preview/examples/src/shared/loadMinemap.ts) 动态加载器（私有部署单源加载、promise 化；token 获取顺序：URL `?token=` → localStorage `MINEMAP_TOKEN`）。示例默认参数：solution `222609`、center `[106.55, 29.56]`（重庆）、私有 MapStyleServer styleJSON（key 内嵌于 URL）
+- docs-preview 示例实验室使用 [examples/src/shared/loadMinemap.ts](packages/docs-preview/examples/src/shared/loadMinemap.ts) 动态加载器（私有部署单源加载、promise 化；**key 由系统统一提供**：`SYSTEM_MINEMAP_KEY` 常量占位于该文件顶部，为空时 `createMinemapMap` 快速失败）。示例默认参数：solution `222609`、center `[106.55, 29.56]`（重庆）、私有 MapStyleServer styleJSON（key 内嵌于 URL）。逐图层样式错误（白名单 `TOLERATED_STYLE_ERRORS`，当前含 `gis_geo_motorway` 缺失）不判为初始化失败——SDK 仅跳过坏图层、不中断渲染；属服务端 styleJSON 与矢量数据不同步的临时容忍，修复后可移除
 
-### 4.8 docs-preview 示例中心
+### 4.8 docs-preview 示例实验室（playground）
 
-- VitePress 1.x；四框架 Tab（vue3/vue2/react/html）+ iframe 预览 + 源码面板
-- `examples/` 使用**双 Vite 配置**构建：
-  - [vite.demos.config.ts](packages/docs-preview/examples/vite.demos.config.ts)：三入口 vue3.html / react.html / plain.html → `../public/demos`（`base: './'`，`emptyOutDir: true`，publicDir 为 examples/public）
-  - [vite.demos.vue2.config.ts](packages/docs-preview/examples/vite.demos.vue2.config.ts)：仅 vue2.html（`emptyOutDir: false` 避免覆盖主构建产物）；alias `vue → Vue 2.7 运行时绝对路径`（`npm:vue@2.7.16`，用 `createRequire.resolve("vue2")` 取绝对路径，因 map-tools 产物软链解析、裸 `vue2` 在其上下文不可解析）
-- 示例注册表 [examples/src/registry.ts](packages/docs-preview/examples/src/registry.ts)：`registry`（id → ExampleMeta{title, description, apis}）+ `exampleOrder` + `getExampleMeta`
-- 四框架实现放 `examples/src/{vue3,vue2,react,html}/{id}.ts`，统一导出 `render(container, options) => 清理函数`；四个入口文件位于 `examples/src/entries/`
-- [scripts/copy-umd.mjs](packages/docs-preview/scripts/copy-umd.mjs)：将 UMD 产物复制为 `examples/public/vendor/fe-utils.umd.js`，供 plain.html 通过 `<script>` 加载全局 `FE_utils`
+- VitePress 1.x；页面 `/examples-center/playground`（`layout: page` + `pageClass: playground-page`），naive-ui 布局：左侧 `NLayoutSider` 分类菜单（可收起）+ 右侧「描述区 + `NSplit`（地图 iframe | 代码编辑器）」
+- 核心组件 [.vitepress/theme/components/Playground.vue](packages/docs-preview/.vitepress/theme/components/Playground.vue)：CodeMirror 6 编辑器（`basicSetup` + `@codemirror/lang-javascript`，TS/JSX）、Sucrase 编译（TS/TSX→ESM，相对导入 `../shared/*` 改写为 `@shared/*`）、**仅手动运行**（「运行」按钮 / Ctrl+Enter；语言切换与「还原」会重置源码并运行一次）
+- 运行容器 [public/runner.html](packages/docs-preview/public/runner.html) + [public/runner/runner.js](packages/docs-preview/public/runner/runner.js)：免构建静态文件，内嵌 import map，父页 postMessage 发编译产物（`{type:"run", id, code}`），runner Blob URL `import()` 后调用 `default render(host, {})`，错误渲染浮层
+- 运行时 vendor：[scripts/build-runner-vendor.mjs](packages/docs-preview/scripts/build-runner-vendor.mjs) 用 **esbuild** 预打包 `public/runner/vendor/`（vue3/vue2/react/maptools-vue3/shared 五个 ESM 单文件；`maptools-vue3.esm.js` 为 `@ym/map-tools/vue3` 子路径入口、`external: ["vue"]` 保持裸名，供 SFC 示例直接 `import { useMap } from "@ym/map-tools/vue3"`）。**react/react-dom/client/react/jsx-runtime 合并进同一个 react.esm.js**（CJS 内部 require 无法跨 bundle external，拆分会产生浏览器不可用的 `__require`；合并后 import map 三个名指向同一文件，react 实例唯一，hooks 正常）。产物为构建产物，已 git 忽略
+- **vue3 示例为 .vue SFC 形态**（`examples/src/vue3/map-init.vue`，`<script setup>` + `useMap`，真实项目写法）：父页编译链对 SFC 先走 `vue/compiler-sfc`（`parse` + `compileScript({ inlineTemplate: true })` 动态 import 按需加载，编译为单模块 ESM 后追加 `export default __sfc__`），再照旧 Sucrase 剥 TS；`<style>` 块不被编译链支持，示例不写样式块。其余三语言仍为 `{id}.{ts,tsx}` 纯 TS
+- 示例注册表 [examples/src/registry.ts](packages/docs-preview/examples/src/registry.ts) + 分类树 [examples/src/categories.ts](packages/docs-preview/examples/src/categories.ts)：目前仅 `map-init`（地图初始化）一个示例；vue3 为 SFC，vue2/react/html 为 `map-init.{ts,tsx}`，统一导出 `render(container, options) => 清理函数`
 
 ## 5. 开发流程（改一处，同步多处）
 
@@ -193,14 +192,14 @@ src/
 
 1. **改 core**：功能只在 `src/core/` 实现，保持框架无关；禁止引入 vue/react 依赖
 2. **更新适配器**：涉及 DOM/组件挂载/事件/生命周期时，同步 `src/vue/` 与 `src/react/`
-3. **补 docs-preview 示例**：每个新能力至少提供四框架变体（`examples/src/{vue3,vue2,react,html}/{id}.ts`），并在 `examples/src/registry.ts` 注册（补充 `apis` 关键词，同时更新 `exampleOrder` 如有展示顺序要求）
+3. **补 docs-preview 示例**：新能力在四语言源码中各加示例变体（`examples/src/{vue3,vue2,react,html}/{id}.{ts,tsx}`），在 `examples/src/registry.ts` 注册 meta 并挂入 `examples/src/categories.ts` 分类树
 4. **同步 skills 与文档**：更新 `packages/skills/map-tools/SKILL.md` 及 docs-preview 的 guide/api 文档
 5. **构建校验**（顺序执行）：
    ```bash
    pnpm --filter @ym/map-tools typecheck
    pnpm --filter @ym/map-tools build
-   pnpm --filter docs-preview build:demos    # 确认 UMD 复制与四框架构建通过
-   pnpm build:all                            # 发布前全量校验
+   pnpm --filter docs-preview build:runner-vendor  # 确认 runner vendor 预打包通过
+   pnpm build:all                                  # 发布前全量校验
    ```
 6. **发布**：见第 6 节
 
@@ -226,7 +225,7 @@ src/
 - **勿删 `pnpm-workspace.yaml` 的 `allowBuilds`**（esbuild 依赖构建脚本权限）
 - **external 边界**：`@turf/turf` 必须内联；`vue`/`react`/`react-dom` 必须 external（Vue 适配层直接依赖消费者提供的 `vue`，vue2 走 2.7、vue3 走 3）
 - **vue3 入口保持薄壳**（仅 `export * from "../vue"`）；**vue2 入口**复用 `../vue/useMap` 但自带 `popup.ts`（Vue 2.7 `new Vue` 挂载，因无原生 `createApp`），此差异不可再合并
-- **Windows 下跨目录复制一律用 Node 脚本**（`node:path`），参照 copy-umd.mjs；勿用 shell 的 `cp`/`copy` 硬编码路径
+- **Windows 下跨目录复制一律用 Node 脚本**（`node:path`），勿用 shell 的 `cp`/`copy` 硬编码路径
 - **勿删/勿改根 .npmrc 的 `@ym` scope 指向**（私仓 `http://192.168.3.180:4873/`）
 - **peerDependencies（vue/react/react-dom）保持 optional**，避免强制消费者安装未用框架
 - 根目录 `src/`、`lib/` 为历史同步产物，源码修改只认 `packages/` 下的文件
