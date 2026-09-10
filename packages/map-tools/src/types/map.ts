@@ -65,6 +65,15 @@ export interface LayerMap {
   getLayoutProperty(layerId: string, name: string): unknown;
 }
 
+export interface FilterMap {
+  setFilter(
+    layerId: string,
+    filter: readonly unknown[] | null,
+    options?: Record<string, unknown>,
+  ): void;
+  getAllLayers(): LayerInstance[];
+}
+
 export interface SourceLoadMap {
   isSourceLoaded(sourceId: string): boolean;
 }
@@ -92,6 +101,7 @@ export interface MapLike
     RemovableMap,
     SourceMap,
     LayerMap,
+    FilterMap,
     SourceLoadMap,
     RenderedFeatureQueryMap,
     CameraMap {}

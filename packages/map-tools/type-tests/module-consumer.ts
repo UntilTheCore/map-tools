@@ -10,7 +10,7 @@ import {
   upsertGeoJSONSource,
 } from "@ym/map-tools";
 import { replaceVectorSource } from "@ym/map-tools/resources";
-import { getLayerVisibility } from "@ym/map-tools/layers";
+import { getLayerVisibility, getSourceLayerIds, setSourceFilter } from "@ym/map-tools/layers";
 import { waitForSourceLoaded } from "@ym/map-tools/query";
 import { fitToFeatures, panTo } from "@ym/map-tools/viewport";
 import { getBearing } from "@ym/map-tools/geometry";
@@ -61,6 +61,11 @@ controller.on("loaded", (payload) => {
 });
 setLayerVisibility(map, layer.id, true);
 getLayerVisibility(map, layer.id);
+const filteredCount: number = setSourceFilter(map, "demo-source", ["in", "deptId", 1, 2]);
+setSourceFilter(map, "demo-source", null);
+const sourceLayerIds: string[] = getSourceLayerIds(map, "demo-source");
+void filteredCount;
+void sourceLayerIds;
 queryRenderedFeatures(map, { layers: [layer.id] });
 void waitForSourceLoaded(map, "demo-source");
 fitToFeatures(map, []);

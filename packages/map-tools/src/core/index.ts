@@ -5,6 +5,7 @@ export * from "./resources/layer";
 export * from "./resources/cleanup";
 export * from "./resources/ids";
 export * from "./layers/visibility";
+export * from "./layers/sourceFilter";
 export * from "./query/renderedFeatures";
 export * from "./query/waitForSourceLoaded";
 export * from "./viewport/camera";
