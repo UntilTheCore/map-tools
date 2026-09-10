@@ -8,7 +8,15 @@ export interface RenderOptions {
   key?: string;
 }
 
-export type ExampleRender = (container: HTMLElement, options: RenderOptions) => () => void;
+export interface ExampleRenderResult {
+  dispose(): void | Promise<void>;
+  ready?: Promise<void>;
+}
+
+export type ExampleRender = (
+  container: HTMLElement,
+  options: RenderOptions,
+) => (() => void) | ExampleRenderResult | Promise<ExampleRenderResult>;
 
 export function styleHost(container: HTMLElement) {
   container.style.cssText =

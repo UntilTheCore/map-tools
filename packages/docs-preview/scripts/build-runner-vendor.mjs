@@ -3,6 +3,7 @@
  *
  * 用途：playground 编辑后的示例代码在 /runner.html 中经 import map 解析
  * `vue` / `vue2` / `react` / `react-dom/client` / `react/jsx-runtime` /
+ * `react/jsx-dev-runtime` /
  * `@shared/loadMinemap` / `@shared/demo`，不依赖外网。
  *
  * 为何用 esbuild 而非 vite（rolldown）：
@@ -11,12 +12,12 @@
  * `export const X = D.X` 的命名 re-export 误树摇掉（rolldown 1.2.4 实测）；
  * esbuild 对「import C from cjs + export const X = C.X」的 wrapper 保留命名导出。
  *
- * react 实例共享（关键）：react-dom 与 jsx-runtime 是 CJS，内部 `require("react")`。
+ * react 实例共享（关键）：react-dom 与 jsx-runtime/jsx-dev-runtime 是 CJS，内部 `require("react")`。
  * 若分成三个 bundle，esbuild 对 CJS 内 require(external) 只能输出运行时 `__require`
  * （浏览器无 require，必然失败）。因此 **react / react-dom/client / react/jsx-runtime
  * 合并打进同一个 react.esm.js**：内部 require 在打包期就地解析，全 bundle 只有一份
- * react 实例。runner 的 import map 把三个裸名都映射到该文件：
- *   "react" / "react-dom/client" / "react/jsx-runtime" → ./vendor/react.esm.js
+ * react 实例。runner 的 import map 把四个裸名都映射到该文件：
+ *   "react" / "react-dom/client" / "react/jsx-runtime" / "react/jsx-dev-runtime" → ./vendor/react.esm.js
  * 导出名取并集：react 全部 named + createRoot/hydrateRoot + jsx/jsxs（Fragment 两处
  * 同引用，只导出一次）。
  *
@@ -39,6 +40,7 @@ const vue2Runtime = require.resolve("vue2/dist/vue.runtime.esm.js");
 const reactCjs = require.resolve("react");
 const reactDomClientCjs = require.resolve("react-dom/client");
 const reactJsxRuntimeCjs = require.resolve("react/jsx-runtime");
+const reactJsxDevRuntimeCjs = require.resolve("react/jsx-dev-runtime");
 
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(wrappersDir, { recursive: true });
@@ -121,12 +123,17 @@ async function writeWrapper(name, source) {
   const reactNames = await cjsExportNames(reactCjs);
   const domClientNames = await cjsExportNames(reactDomClientCjs);
   const jsxRuntimeNames = await cjsExportNames(reactJsxRuntimeCjs);
+  const jsxDevRuntimeNames = await cjsExportNames(reactJsxDevRuntimeCjs);
 
   // Fragment（react 与 jsx-runtime 同引用）与 version（react-dom/client 与 react 等值）
   // 只从 react 导出一次，避免命名冲突
   const jsxPart = jsxRuntimeNames
     .filter((k) => k !== "Fragment" && k !== "version" && !reactNames.includes(k))
     .map((k) => `export const ${k} = J.${k};`)
+    .join("\n");
+  const jsxDevPart = jsxDevRuntimeNames
+    .filter((k) => !reactNames.includes(k) && !jsxRuntimeNames.includes(k))
+    .map((k) => `export const ${k} = JD.${k};`)
     .join("\n");
   const domPart = domClientNames
     .filter((k) => k !== "version" || !reactNames.includes(k))
@@ -138,9 +145,11 @@ async function writeWrapper(name, source) {
     `import R from "${reactCjs.replace(/\\/g, "/")}";`,
     `import D from "${reactDomClientCjs.replace(/\\/g, "/")}";`,
     `import J from "${reactJsxRuntimeCjs.replace(/\\/g, "/")}";`,
+    `import JD from "${reactJsxDevRuntimeCjs.replace(/\\/g, "/")}";`,
     reactPart,
     domPart,
     jsxPart,
+    jsxDevPart,
   ].join("\n");
 
   await esbuildBundle({

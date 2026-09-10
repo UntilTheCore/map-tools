@@ -4,7 +4,7 @@
  * 卸载后到达的异步结果不再写状态（disposed 标志防竞态）。
  */
 import Vue from "vue2";
-import { createMinemapMap } from "../shared/loadMinemap";
+import { createMinemapMapHandle } from "../shared/loadMinemap";
 import { styleHost, type RenderOptions } from "../shared/demo";
 
 const Demo = Vue.extend({
@@ -21,12 +21,11 @@ const Demo = Vue.extend({
       disposed = true;
     };
     this.status = "SDK 加载中，创建 minemap.Map…";
-    createMinemapMap(this.$refs.host as HTMLElement)
+    const handle = createMinemapMapHandle(this.$refs.host as HTMLElement);
+    (this as typeof this & { mapHandle?: ReturnType<typeof createMinemapMapHandle> }).mapHandle =
+      handle;
+    handle.ready
       .then((map) => {
-        if (disposed) {
-          map.remove(); // 组件已销毁，直接释放
-          return;
-        }
         this.mapInstance = map;
         const center = map.getCenter();
         this.status = `地图已就绪 zoom=${map.getZoom()} center=[${center.lng.toFixed(3)}, ${center.lat.toFixed(3)}]`;
@@ -39,6 +38,9 @@ const Demo = Vue.extend({
   },
   beforeDestroy() {
     this.setDisposed?.();
+    (
+      this as typeof this & { mapHandle?: ReturnType<typeof createMinemapMapHandle> }
+    ).mapHandle?.dispose();
     (this.mapInstance as minemap.Map | undefined)?.remove();
     this.mapInstance = undefined;
   },

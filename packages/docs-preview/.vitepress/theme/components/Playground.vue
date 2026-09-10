@@ -139,7 +139,7 @@
  * - 语言：vue3 / vue2 / react / html 四套示例源码
  * - key 由系统提供（SYSTEM_MINEMAP_KEY），示例代码不出现 key
  */
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import {
   NButton,
   NConfigProvider,
@@ -158,7 +158,6 @@ import { javascript } from "@codemirror/lang-javascript";
 import { html } from "@codemirror/lang-html";
 import { keymap } from "@codemirror/view";
 import { Prec } from "@codemirror/state";
-import { transform } from "sucrase";
 import ChevronDown from "naive-ui/es/_internal/icons/ChevronDown";
 import { ArrowUndoCircleOutline, CopyOutline, PlayCircleOutline } from "@vicons/ionicons5";
 import {
@@ -167,6 +166,9 @@ import {
   DEFAULT_PLAYGROUND_EXAMPLE,
 } from "../../../examples/src/categories";
 import { registry } from "../../../examples/src/registry";
+import { compileExample } from "../playground/compiler";
+import { createRunnerController } from "../playground/runnerController";
+import { RUNNER_PROTOCOL_VERSION, type RunnerReply } from "../playground/protocol";
 
 interface Variant {
   id: "vue3" | "vue2" | "react" | "html";
@@ -206,7 +208,10 @@ const iframeRef = ref<HTMLIFrameElement | null>(null);
 const editorHost = ref<HTMLElement | null>(null);
 const editor = shallowRef<EditorView | null>(null);
 const initialSource = ref("");
+const editorSource = ref("");
+const pendingRunSource = ref("");
 const iframeKey = ref(0);
+const runner = createRunnerController(iframeRef);
 
 const activeVariantMeta = computed(
   () => variants.find((v) => v.id === activeVariant.value) ?? variants[0],
@@ -237,6 +242,8 @@ const themeOverrides = {
 // 图标：@vicons/ionicons5（PlayCircleOutline / CopyOutline / ArrowUndoCircleOutline）
 // 语言下拉箭头沿用 naive-ui 内部图标
 const ChevronDownIcon = ChevronDown;
+
+let sourceRequestId = 0;
 
 function loadSource(): Promise<string> {
   const key = `../../../examples/src/${activeVariantMeta.value.srcDir}/${activeId.value}.${activeVariantMeta.value.file}`;
@@ -273,93 +280,37 @@ function syncUrl() {
  * 2. Sucrase 转译 TS/TSX（jsxRuntime automatic，import 语句原样保留为 ESM）
  * 3. 相对导入 ../shared/* 改写为 @shared/*（runner 已做裸名重写）
  */
-function compile(source: string): string {
-  let code = source;
-  if (activeVariantMeta.value.sfc) {
-    code = compileSfc(source);
-  }
-  const result = transform(code, {
-    transforms: ["typescript", "jsx"],
-    jsxRuntime: "automatic",
-    jsxImportSource: "react",
-    filePath: activeVariantMeta.value.file === "tsx" ? "example.tsx" : "example.ts",
-  });
-  return result.code.replace(/(from\s*|import\s*\(\s*)(["'])\.\.\/shared\//g, "$1$2@shared/");
-}
-
-// vue/compiler-sfc 模块缓存（ensureSfcCompiler 动态加载；SFC 变体编译用）
-let compilerSfcModule: typeof import("vue/compiler-sfc") | null = null;
-
-/** vue/compiler-sfc 按需加载（浏览器子路径构建，约 200KB，仅 vue3 SFC 变体首次运行时载入） */
-async function ensureSfcCompiler() {
-  if (!compilerSfcModule) {
-    compilerSfcModule = await import("vue/compiler-sfc");
-  }
-}
-
-/** SFC → 可运行 ESM：编译为组件模块后包一层 render(host) 外壳（runner 约定 default 为 render 函数） */
-function compileSfc(source: string): string {
-  const compiler = compilerSfcModule;
-  if (!compiler) throw new Error("vue/compiler-sfc 尚未加载");
-  const { descriptor, errors } = compiler.parse(source, { filename: "map-init.vue" });
-  if (errors.length > 0) {
-    throw new Error(errors.map((e: Error) => e.message).join("; "));
-  }
-  const out = compiler.compileScript(descriptor, { id: "playground", inlineTemplate: true });
-  // vue 3.5 起 inlineTemplate 输出已带 `export default`；旧版输出 `const __sfc__ =` 需补导出
-  const componentCode = /^\s*export default/m.test(out.content)
-    ? out.content.replace(/^\s*export default/m, "const __sfc__ =")
-    : out.content;
-  // runner 约定模块 default 为 render(container) => 清理函数；
-  // 把 SFC 组件挂载进容器，卸载时 unmount（响应式状态随组件销毁自动清理）。
-  // createApp 从 vue 具名导入（编辑器示例代码可能没导入它，外壳自己补）
-  return `import { createApp as __createApp } from "vue";
-${componentCode}
-export default function render(container) {
-  // 不改写容器（#map-host）行内样式：runner.html 以 position:absolute;inset:0
-  // 撑满它，改写 position:relative 会失去 inset 撑开效果导致高度塌陷为 0
-  const mountEl = document.createElement("div");
-  mountEl.style.cssText = "width:100%;height:100%;";
-  container.appendChild(mountEl);
-  const app = __createApp(__sfc__);
-  app.mount(mountEl);
-  return () => {
-    app.unmount();
-    mountEl.remove();
-  };
-}
-`;
-}
-
-let runSeq = 0;
-let pendingRun: { id: number; code: string } | null = null;
+let pendingRun: { sessionId: string; runId: number; code: string } | null = null;
+let compileRequestId = 0;
 
 function onIframeLoad() {
   const run = pendingRun;
   const iframe = iframeRef.value;
-  if (!run || !iframe || run.id !== runSeq) return;
+  if (!run || !iframe) return;
   pendingRun = null;
-  iframe.contentWindow?.postMessage(
-    { type: "run", id: run.id, code: run.code },
-    window.location.origin,
-  );
+  runner.sendRun(run.code, run.runId);
 }
 async function runCode() {
   const view = editor.value;
   if (!view) return;
-  const runId = ++runSeq;
-  const source = view.state.doc.toString();
-  let code: string;
+  const requestId = ++compileRequestId;
+  const runId = runner.getRunId() + requestId;
+  pendingRunSource.value = view.state.doc.toString();
   try {
-    if (activeVariantMeta.value.sfc) await ensureSfcCompiler();
-    code = compile(source);
+    const result = await compileExample({
+      runId,
+      framework: activeVariant.value,
+      filename: `example.${activeVariantMeta.value.file === "vue" ? "ts" : activeVariantMeta.value.file}`,
+      source: pendingRunSource.value,
+      sfc: activeVariantMeta.value.sfc,
+    });
+    if (requestId !== compileRequestId) return;
+    const session = runner.run(result.code);
+    pendingRun = { ...session, code: result.code };
+    iframeKey.value += 1;
   } catch (error) {
     message.error(`编译失败：${error instanceof Error ? error.message : String(error)}`);
-    return;
   }
-  if (runId !== runSeq) return;
-  pendingRun = { id: runId, code };
-  iframeKey.value += 1;
 }
 
 async function copySource() {
@@ -484,6 +435,9 @@ function mountEditor(initial: string) {
       runKeymap,
       basicSetup,
       editorLanguage.value,
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) editorSource.value = update.state.doc.toString();
+      }),
       EditorView.theme({}, { dark: document.documentElement.classList.contains("dark") }),
     ],
     parent: editorHost.value,
@@ -499,9 +453,15 @@ const editorLanguage = computed(() =>
 
 // 语言切换时重建编辑器：CodeMirror 语言扩展不支持运行中替换，需重挂载
 watch([activeVariant, activeId], async () => {
+  const requestId = ++sourceRequestId;
+  runner.dispose();
   const source = await loadSource();
+  if (requestId !== sourceRequestId) return;
   initialSource.value = source;
+  editorSource.value = source;
   rebuildEditor(source);
+  await nextTick();
+  if (requestId === sourceRequestId) runCode();
 });
 
 function rebuildEditor(source: string) {
@@ -521,9 +481,9 @@ onMounted(async () => {
   }
   // SFC 变体首次运行需要 compiler-sfc（约 200KB 按需加载），
   // 必须先 ensureSfcCompiler 再编译，否则初始 runCode 直接报"尚未加载"
-  if (activeVariantMeta.value.sfc) await ensureSfcCompiler();
   const source = await loadSource();
   initialSource.value = source;
+  editorSource.value = source;
   mountEditor(source);
   // 初始运行一次
   runCode();
@@ -533,10 +493,19 @@ let disposeShield: (() => void) | null = null;
 
 onMounted(() => {
   disposeShield = installDragShield();
+  window.addEventListener("message", onRunnerMessage);
 });
+
+function onRunnerMessage(event: MessageEvent<RunnerReply>) {
+  if (event.origin !== window.location.origin) return;
+  if (!event.data || event.data.version !== RUNNER_PROTOCOL_VERSION) return;
+  runner.onReply(event.data);
+}
 
 onBeforeUnmount(() => {
   pendingRun = null;
+  runner.dispose();
+  window.removeEventListener("message", onRunnerMessage);
   disposeShield?.();
   editor.value?.destroy();
   editor.value = null;

@@ -8,6 +8,7 @@ export {
   MINEMAP_CSS,
   SYSTEM_MINEMAP_KEY,
   createMinemapMap,
+  createMinemapMapHandle,
   loadMinemap,
   setupMinemapGlobals,
 } from "../shared/loadMinemap";

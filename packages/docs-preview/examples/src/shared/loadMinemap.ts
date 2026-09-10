@@ -22,6 +22,7 @@ const MINEMAP_INIT_TIMEOUT_MS = 15_000;
 export const SYSTEM_MINEMAP_KEY = "52c2a1dac4e04498bb9d32cb830f29a4";
 
 let loadingPromise: Promise<typeof minemap> | null = null;
+let configuredKey: string | null = null;
 
 function injectScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -83,14 +84,138 @@ export function loadMinemap(): Promise<typeof minemap> {
 export function setupMinemapGlobals(key: string): typeof minemap {
   const m = window.minemap;
   if (!m) throw new Error("minemap SDK 尚未加载");
+  if (configuredKey && configuredKey !== key) {
+    throw new Error("minemap 全局配置已初始化为其他 key");
+  }
+  if (configuredKey === key) return m;
   m.domainUrl = "https://gmap.cqphx.cn:4443";
   m.dataDomainUrl = "https://gmap.cqphx.cn:4443";
   m.serverDomainUrl = "https://gmap.cqphx.cn:4443";
   m.spriteUrl = "https://gmap.cqphx.cn:4443/minemapapi/v3.3.0/sprite/sprite";
   m.serviceUrl = "https://gmap.cqphx.cn:4443/service";
   m.key = key;
-  m.solution = 222_546;
+  m.solution = 222_609;
+  configuredKey = key;
   return m;
+}
+
+export type MinemapRuntimeErrorCode =
+  | "SDK_SCRIPT_LOAD_FAILED"
+  | "SDK_GLOBAL_MISSING"
+  | "MAP_CONSTRUCTOR_FAILED"
+  | "MAP_LOAD_TIMEOUT"
+  | "MAP_STYLE_ERROR"
+  | "MAP_RUNTIME_ERROR";
+
+export interface MinemapMapHandle {
+  map: minemap.Map | null;
+  host: HTMLElement;
+  ready: Promise<minemap.Map>;
+  dispose(): void;
+}
+
+export function createMinemapMapHandle(
+  container: HTMLElement,
+  key: string = SYSTEM_MINEMAP_KEY,
+  extra: Record<string, unknown> = {},
+  onCreated?: (map: minemap.Map) => void,
+): MinemapMapHandle {
+  const host = document.createElement("div");
+  host.id = `minemap-${Math.random().toString(36).slice(2)}`;
+  host.style.cssText = "width:100%;height:100%;position:relative;";
+  container.appendChild(host);
+  let map: minemap.Map | null = null;
+  let settled = false;
+  let disposed = false;
+  let timeoutId: number | null = null;
+  let detach: (() => void) | undefined;
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    if (timeoutId !== null) window.clearTimeout(timeoutId);
+    timeoutId = null;
+    detach?.();
+    try {
+      map?.remove();
+    } catch {
+      /* SDK cleanup is best effort. */
+    }
+    map = null;
+    host.remove();
+  };
+  const ready = loadMinemap()
+    .then(
+      (m) =>
+        new Promise<minemap.Map>((resolve, reject) => {
+          if (disposed) return reject(new Error("地图实例已释放"));
+          try {
+            setupMinemapGlobals(key);
+          } catch (error) {
+            reject(error);
+            return;
+          }
+          const fail = (error: unknown) => {
+            if (settled) return;
+            settled = true;
+            detach?.();
+            dispose();
+            reject(error instanceof Error ? error : new Error(String(error)));
+          };
+          const onLoad = () => {
+            if (settled || disposed) return;
+            settled = true;
+            if (timeoutId !== null) window.clearTimeout(timeoutId);
+            timeoutId = null;
+            detach?.();
+            resolve(map as minemap.Map);
+          };
+          const onError = (event: minemap.MapEventMap["error"]) => {
+            if (isToleratedStyleError(event)) return;
+            fail(new Error(`底图加载失败: ${event.error ? String(event.error) : String(event)}`));
+          };
+          try {
+            map = new m.Map({
+              container: host.id,
+              preserveDrawingBuffer: true,
+              style:
+                "https://gmap.cqphx.cn:4443/tianjing-server/mapdata-api/services/MapStyleServer/minemap-style/c8d13ba4fa374f16a60c7951be85fd03/styleJSON?key=d29c4baf318e48cf8d214b03a36b6cf2",
+              center: [106.55, 29.56],
+              zoom: 10,
+              maxZoom: 16,
+              minZoom: 9,
+              projection: "MERCATOR",
+              logoControl: false,
+              doubleClickZoom: false,
+              ...extra,
+            });
+            map.on("load", onLoad);
+            map.on("error", onError);
+            detach = () => {
+              map?.off("load", onLoad);
+              map?.off("error", onError);
+            };
+            timeoutId = window.setTimeout(
+              () => fail(new Error(`地图加载超时（${MINEMAP_INIT_TIMEOUT_MS}ms）`)),
+              MINEMAP_INIT_TIMEOUT_MS,
+            );
+            onCreated?.(map);
+          } catch (error) {
+            fail(new Error(`minemap.Map 创建失败: ${getErrorMessage(error)}`));
+          }
+        }),
+    )
+    .catch((error) => {
+      dispose();
+      throw error;
+    });
+  return {
+    get map() {
+      return map;
+    },
+    host,
+    ready,
+    dispose,
+  };
 }
 
 /** 创建 minemap 地图实例，等待 load 事件后 resolve；key 缺省使用系统 key */
@@ -105,90 +230,8 @@ export function createMinemapMap(
       new Error("系统 key 未配置：请在 loadMinemap.ts 的 SYSTEM_MINEMAP_KEY 中填入 minemap key"),
     );
   }
-  return loadMinemap().then(
-    (m) =>
-      new Promise<minemap.Map>((resolve, reject) => {
-        setupMinemapGlobals(key);
-        const containerId = `minemap-${Math.random().toString(36).slice(2)}`;
-        const host = document.createElement("div");
-        host.id = containerId;
-        host.style.cssText = "width:100%;height:100%;position:relative;";
-        container.appendChild(host);
-        let map: minemap.Map | null = null;
-        let settled = false;
-        let timeoutId: number | null = null;
-
-        const cleanupFailedMap = () => {
-          if (timeoutId !== null) {
-            window.clearTimeout(timeoutId);
-            timeoutId = null;
-          }
-          if (map) {
-            map.off("load", onLoad);
-            map.off("error", onError);
-            map.remove();
-            map = null;
-          }
-          host.remove();
-        };
-
-        const fail = (error: unknown) => {
-          if (settled) return;
-          settled = true;
-          cleanupFailedMap();
-          reject(error instanceof Error ? error : new Error(String(error)));
-        };
-
-        const onLoad = () => {
-          if (settled) return;
-          settled = true;
-          if (timeoutId !== null) {
-            window.clearTimeout(timeoutId);
-            timeoutId = null;
-          }
-          map?.off("load", onLoad);
-          map?.off("error", onError);
-          resolve(map as minemap.Map);
-        };
-
-        const onError = (e: minemap.MapEventMap["error"]) => {
-          if (settled || isToleratedStyleError(e)) return;
-          fail(
-            new Error(`底图加载失败（key 无效或无权限）: ${e.error ? String(e.error) : String(e)}`),
-          );
-        };
-        try {
-          map = new m.Map({
-            container: containerId,
-            preserveDrawingBuffer: true, //截图地图底图必须要这样设置
-            style:
-              "https://gmap.cqphx.cn:4443/tianjing-server/mapdata-api/services/MapStyleServer/minemap-style/c8d13ba4fa374f16a60c7951be85fd03/styleJSON?key=d29c4baf318e48cf8d214b03a36b6cf2",
-            center: [106.55, 29.56],
-            zoom: 10,
-            maxZoom: 16,
-            minZoom: 9,
-            projection: "MERCATOR",
-            logoControl: false,
-            doubleClickZoom: false,
-            ...extra,
-          });
-        } catch (error: unknown) {
-          fail(new Error(`minemap.Map 创建失败: ${getErrorMessage(error)}`));
-          return;
-        }
-        try {
-          onCreated?.(map);
-        } catch (error: unknown) {
-          fail(new Error(`minemap.Map 初始化回调失败: ${getErrorMessage(error)}`));
-          return;
-        }
-        map.on("load", onLoad);
-        map.on("error", onError);
-        timeoutId = window.setTimeout(() => {
-          fail(new Error(`minemap 地图加载超时（${MINEMAP_INIT_TIMEOUT_MS}ms）`));
-        }, MINEMAP_INIT_TIMEOUT_MS);
-      }),
-  );
+  const handle = createMinemapMapHandle(container, key, extra, onCreated);
+  return handle.ready.then((map) => map);
 }
 
 function getErrorMessage(error: unknown): string {

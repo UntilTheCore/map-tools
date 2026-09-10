@@ -4,7 +4,7 @@
  */
 import { createRoot } from "react-dom/client";
 import { useEffect, useRef, useState } from "react";
-import { createMinemapMap } from "../shared/loadMinemap";
+import { createMinemapMapHandle } from "../shared/loadMinemap";
 import { styleHost, type RenderOptions } from "../shared/demo";
 
 function Demo() {
@@ -14,12 +14,9 @@ function Demo() {
   useEffect(() => {
     let disposed = false;
     setStatus("SDK 加载中，创建 minemap.Map…");
-    createMinemapMap(hostRef.current!)
+    const handle = createMinemapMapHandle(hostRef.current!);
+    handle.ready
       .then((map) => {
-        if (disposed) {
-          map.remove(); // 组件已卸载，直接释放
-          return;
-        }
         const center = map.getCenter();
         setStatus(
           `地图已就绪 zoom=${map.getZoom()} center=[${center.lng.toFixed(3)}, ${center.lat.toFixed(3)}]`,
@@ -33,6 +30,7 @@ function Demo() {
       disposed = true;
       // 真实项目中地图实例经 ref 持有并在 cleanup 中 remove()；
       // 本示例 createMinemapMap 内部持有实例，这里通过重渲染容器兜底释放。
+      handle.dispose();
       if (hostRef.current) hostRef.current.innerHTML = "";
     };
   }, []);
