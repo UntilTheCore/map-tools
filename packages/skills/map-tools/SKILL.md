@@ -111,9 +111,13 @@ ensureLayers(map, [{ id: layerId, type: "fill", source: sourceId }]);
 setLayerVisibility(map, layerId, true);
 setLayersVisibility(map, [layerIdA, layerIdB], false);
 const visibility = toggleLayerVisibility(map, layerId);
+
+// source 级过滤：自动对该 source 的全部图层成对 setFilter，null 清除
+setSourceFilter(map, sourceId, ["in", "deptId", 101, 102]);
+setSourceFilter(map, sourceId, null);
 ```
 
-显隐 API 只负责显隐，不负责数据加载。不存在图层时：`setLayerVisibility` 返回 `false`，`toggleLayerVisibility` 返回 `undefined`。
+显隐 API 只负责显隐，不负责数据加载。不存在图层时：`setLayerVisibility` 返回 `false`，`toggleLayerVisibility` 返回 `undefined`。双通道选择：整层开关用 `setLayerVisibility`，层内按属性筛 feature 用 `setSourceFilter`（返回成功设置的图层数量，source 无图层时返回 0）。
 
 ### Query 与 Viewport
 

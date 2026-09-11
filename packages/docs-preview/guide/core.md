@@ -9,6 +9,7 @@ import {
   ensureLayers,
   upsertGeoJSONSource,
   setLayerVisibility,
+  setSourceFilter,
   fitToFeatures,
 } from "@ym/map-tools";
 ```
@@ -40,6 +41,13 @@ setLayerVisibility(map, "district-fill", true);
 ```
 
 资源 API 明确区分 GeoJSON 更新和 vector source 重建，图层显隐不会隐式加载数据。
+
+整层用显隐（layout），层内按属性筛 feature 用 source 级过滤——`setSourceFilter` 自动找到引用该 source 的全部图层并统一设置，无需手工成对处理 fill/outline：
+
+```ts
+setSourceFilter(map, "district-source", ["in", "deptId", 101, 102]);
+setSourceFilter(map, "district-source", null); // 清除过滤
+```
 
 ## 视野与查询
 
