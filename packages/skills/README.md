@@ -4,14 +4,15 @@
 
 ## 技能清单
 
-| 技能            | 目录                                   | frontmatter name  | 覆盖范围                                                                                                                                        |
-| --------------- | -------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| map-tools       | `map-tools/`                           | `map-tools`       | @ym/map-tools 安装、接入、API 速查、useMap、弹窗适配、minemap 前置依赖与示例                                                                    |
-| MineMap 总入口  | `minemap-jsapi-skill/`                 | `minemap`         | 任务路由：判断开发任务类型后引导到 4 个子技能，并收拢依赖顺序、命名空间、坐标格式、初始化时机等通用约定                                         |
-| ├ 核心库        | `minemap-jsapi-skill/minemap-2d-api/`  | `minemap-2d-api`  | `minemap` 命名空间：地图初始化、图层/数据源、Marker/Popup、控件、事件、要素查询、相机动画、自定义渲染（细节在 `references/`）                   |
-| ├ 2D 工具库     | `minemap-jsapi-skill/minemap-2d-util/` | `minemap-2d-util` | `minemaputil` 命名空间：RangingTool 测距测面积、fitBounds 视口适配、SpaceUtil 空间计算                                                          |
-| ├ 编辑/标绘插件 | `minemap-jsapi-skill/minemap-edit/`    | `minemap-edit`    | `minemap.edit` 命名空间：30+ 绘制模式、二次编辑、样式自定义、吸附/锁定、undo/redo                                                               |
-| └ LBS 服务插件  | `minemap-jsapi-skill/minemap-lbs/`     | `minemap-lbs`     | `minemap.service` / `minemap.component` / `minemap.lbsUtil`：路径规划、POI 搜索、地理编码、行政区域、轨迹处理、到达圈（参数表在 `references/`） |
+| 技能            | 目录                                   | frontmatter name           | 覆盖范围                                                                                                                                                         |
+| --------------- | -------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| map-tools       | `map-tools/`                           | `map-tools`                | @ym/map-tools 安装、接入、API 速查、useMap、弹窗适配、minemap 前置依赖与示例                                                                                     |
+| 最佳实践        | `map-tools-best-practices/`            | `map-tools-best-practices` | @ym/map-tools 中大型地图页面架构：三层结构（layer/data/controller）、scene 工厂、LayerGroup 登记表、覆盖物销毁协议、Code Review 清单（完整示例在 `references/`） |
+| MineMap 总入口  | `minemap-jsapi-skill/`                 | `minemap`                  | 任务路由：判断开发任务类型后引导到 4 个子技能，并收拢依赖顺序、命名空间、坐标格式、初始化时机等通用约定                                                          |
+| ├ 核心库        | `minemap-jsapi-skill/minemap-2d-api/`  | `minemap-2d-api`           | `minemap` 命名空间：地图初始化、图层/数据源、Marker/Popup、控件、事件、要素查询、相机动画、自定义渲染（细节在 `references/`）                                    |
+| ├ 2D 工具库     | `minemap-jsapi-skill/minemap-2d-util/` | `minemap-2d-util`          | `minemaputil` 命名空间：RangingTool 测距测面积、fitBounds 视口适配、SpaceUtil 空间计算                                                                           |
+| ├ 编辑/标绘插件 | `minemap-jsapi-skill/minemap-edit/`    | `minemap-edit`             | `minemap.edit` 命名空间：30+ 绘制模式、二次编辑、样式自定义、吸附/锁定、undo/redo                                                                                |
+| └ LBS 服务插件  | `minemap-jsapi-skill/minemap-lbs/`     | `minemap-lbs`              | `minemap.service` / `minemap.component` / `minemap.lbsUtil`：路径规划、POI 搜索、地理编码、行政区域、轨迹处理、到达圈（参数表在 `references/`）                  |
 
 ## 目录结构
 
@@ -21,6 +22,14 @@ packages/skills/
 ├── README.md                        # 本文件
 ├── map-tools/
 │   └── SKILL.md                     # 单技能：@ym/map-tools
+├── map-tools-best-practices/        # 单技能：地图页面架构最佳实践
+│   ├── SKILL.md                     # 规则与判断 + Code Review 清单
+│   └── references/                  # 完整示例（按主题拆分，渐进加载）
+│       ├── data-adapter.md          #   类型化 FeatureCollection + 入口适配器
+│       ├── layer-group.md           #   LayerGroup 登记表与装配
+│       ├── scene-factory.md         #   scene 工厂 + SceneStore + deps 注入完整示例
+│       ├── overlays.md              #   Marker/Popup 登记与销毁协议
+│       └── page-assembly.md         #   页面装配与 useMap 事件接线
 └── minemap-jsapi-skill/             # 技能族：MineMap JSAPI 全家桶
     ├── SKILL.md                     # 总入口（name: minemap）：任务路由表 + 通用约定
     ├── minemap-2d-api/

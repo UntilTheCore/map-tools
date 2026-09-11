@@ -5,7 +5,7 @@ description: 使用 @ym/map-tools v3 开发 minemap地图应用，处理 GeoJSON
 
 # @ym/map-tools v3
 
-`@ym/map-tools` 是基于 `@turf/turf` 的 minemap 工具库。minemap SDK 由页面 Script 从 CDN 注入，本库不引入 minemap npm 运行时依赖。当前目标版本为 **3.0.0**，采用破坏性 API 重构，不保留 v2 兼容别名。
+`@ym/map-tools` 是基于 `@turf/turf` 的 minemap 工具库。minemap SDK 由页面 Script 从 CDN 注入，本库不引入 minemap npm 运行时依赖。当前目标版本为 **3.0.0**，采用破坏性 API 重构，不保留 v2 兼容别名。构建中大型地图业务页面时的分层结构（layer/data/controller）、scene 工厂与覆盖物销毁协议见 [../map-tools-best-practices/SKILL.md](../map-tools-best-practices/SKILL.md)。
 
 ## 安装与 SDK
 
