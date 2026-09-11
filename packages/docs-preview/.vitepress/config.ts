@@ -34,6 +34,7 @@ export default defineConfig({
           text: "指南",
           items: [
             { text: "快速开始（安装与私仓配置）", link: "/guide/getting-started" },
+            { text: "最佳实践", link: "/guide/best-practices" },
             { text: "核心 API", link: "/guide/core" },
             { text: "接入方式 · Vue 3", link: "/guide/vue3" },
             { text: "接入方式 · Vue 2", link: "/guide/vue2" },
