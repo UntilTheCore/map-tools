@@ -49,21 +49,22 @@ SDK 没有官方 npm 类型包；类型由独立包 `@ym/minemap-types` 提供�
 
 ## 入口
 
-| 场景      | 导入路径                  | 能力                                      |
-| --------- | ------------------------- | ----------------------------------------- |
-| 核心      | `@ym/map-tools`           | 全部框架无关 core API 与模块类型          |
-| Resources | `@ym/map-tools/resources` | source/layer 创建、替换、清理、id         |
-| Layers    | `@ym/map-tools/layers`    | 图层显隐                                  |
-| Query     | `@ym/map-tools/query`     | source 等待、渲染要素查询                 |
-| Viewport  | `@ym/map-tools/viewport`  | 相机与 bbox 视野                          |
-| Geometry  | `@ym/map-tools/geometry`  | 坐标与纯几何工具                          |
-| Overlays  | `@ym/map-tools/overlays`  | marker/popup 覆盖物清理                   |
-| Popup     | `@ym/map-tools/popup`     | 框架无关 `createPopupDom`                 |
-| Events    | `@ym/map-tools/events`    | `createMapEventController` 与统一事件类型 |
-| Vue 3     | `@ym/map-tools/vue3`      | `useMap`、Vue `createPopupDom`            |
-| Vue 2.7   | `@ym/map-tools/vue2`      | `useMap`、Vue 2.7 `createPopupDom`        |
-| React     | `@ym/map-tools/react`     | `useMap`、React `createPopupDom`          |
-| UMD 类型  | `@ym/map-tools/umd`       | `FE_utils` 与 minemap 全局声明            |
+| 场景      | 导入路径                  | 能力                                                           |
+| --------- | ------------------------- | -------------------------------------------------------------- |
+| 核心      | `@ym/map-tools`           | 全部框架无关 core API 与模块类型                               |
+| Resources | `@ym/map-tools/resources` | source/layer 创建、替换、清理、id                              |
+| Layers    | `@ym/map-tools/layers`    | 图层显隐                                                       |
+| Query     | `@ym/map-tools/query`     | source 等待、渲染要素查询                                      |
+| Viewport  | `@ym/map-tools/viewport`  | 相机与 bbox 视野                                               |
+| Geometry  | `@ym/map-tools/geometry`  | 坐标与纯几何工具                                               |
+| Overlays  | `@ym/map-tools/overlays`  | marker/popup 覆盖物清理                                        |
+| Popup     | `@ym/map-tools/popup`     | 框架无关 `createPopupDom`                                      |
+| Track     | `@ym/map-tools/track`     | `createTrackPlayer`、`createPlaybackClock`、`createTrackFleet` |
+| Events    | `@ym/map-tools/events`    | `createMapEventController` 与统一事件类型                      |
+| Vue 3     | `@ym/map-tools/vue3`      | `useMap`、`useTrackPlayer`、Vue `createPopupDom`               |
+| Vue 2.7   | `@ym/map-tools/vue2`      | `useMap`、`useTrackPlayer`、Vue 2.7 `createPopupDom`           |
+| React     | `@ym/map-tools/react`     | `useMap`、`useTrackPlayer`、React `createPopupDom`             |
+| UMD 类型  | `@ym/map-tools/umd`       | `FE_utils` 与 minemap 全局声明                                 |
 
 UMD 运行时继续使用：
 
@@ -163,6 +164,35 @@ handle.dispose();
 - HTML 必须显式用 `{ kind: "html" }`，调用方负责输入安全。
 - Vue/React 子路径的 `createPopupDom` 接受组件或 ReactElement，`dispose()` 会卸载框架根节点。
 
+### Track（轨迹回放，v3.2.0）
+
+```ts
+import { createTrackFleet, createTrackPlayer } from "@ym/map-tools";
+
+// 单车最小用法：points 为 [{ lng, lat, time? }]，time 是 epoch 毫秒（number 一律按毫秒）
+const player = createTrackPlayer(map, { points, icon: "/bus.png", speed: 60 });
+player.play(); // 到达终点自动 paused 且自建时钟停摆，无 RAF 空转
+
+// 多车同步：fleet 拥有共享时钟，成员必须用 fleet.clock 创建；倍率设 fleet 级，成员不传 speed
+const fleet = createTrackFleet({ speed: 60 });
+const p1 = createTrackPlayer(map, { points: a, clock: fleet.clock });
+const p2 = createTrackPlayer(map, { points: b, clock: fleet.clock });
+fleet.add(p1);
+fleet.add(p2);
+p1.play();
+p2.play(); // 成员先进入跟随态
+fleet.play(); // fleet 驱动时钟
+```
+
+- `speed` 是倍率：realtime（数据带 time）下 1 = 真实时间；uniform 下乘 `referenceSpeed`（默认 38.9 m/s）。倍率不改变时间轴长度，调速时进度条不跳变。
+- 控制：`play(from?)`（from 为 fraction 0–1，仅 solo 生效）、`seekFraction`（越界钳制）、`seekTime`（clock 原始 elapsed 轴；uniform 下位置随倍率漂移，稳定定位用 `seekFraction`）、`setSpeed`、`stop`。
+- 事件 payload：`progress`/`arrive` 为 `TrackProgress`（`fraction/distanceMeters/timeMs/coordinate`），`status` 为 `{ status }`，`error` 为 `{ code, message }`；uniform 的 `timeMs` 是 elapsed 不是墙钟。构造期时间戳告警（`NON_MONOTONIC_TIME`）在首个 `on("error")` 订阅时补投。
+- 多车规则：成员级控制 = 个体冻结（不碰共享时钟），fleet 级控制 = 全局；轴走完发 `fleet.arrive{fraction:1}`，全员提前冻结则静默停钟。`fleet.seekFraction/seekTime` 清除终态，stopped 后 `play()` 从回看点继续。
+- fleet 倍率在 `createTrackFleet({ speed })` 设置；成员**不传 `speed`**（injected 成员的 `speed` 是成员自身倍率，会与共享时钟倍率相乘，导致车辆先跑完而全局进度几乎不动）。
+- 销毁：`destroy()` 幂等，回收 marker/trail 图层；注入时钟只退订、自建时钟连删。fleet 中成员**先 `fleet.remove(player)` 再 `player.destroy()`**。
+- `SDK_UNAVAILABLE` 仅在默认 marker 工厂且 `globalThis.minemap` 缺失时抛出；注入 `createMarker` 完全解耦 SDK。图标朝向用 `bearingCompensation` 配置（朝下素材 180、朝上 0），不要事后翻转。
+- Vue/React 子路径的 `useTrackPlayer(map, options)` 接受 `MapLike` 或 map Ref：非空懒建、变 null 销毁、换实例销毁重建，卸载钩子自动 `destroy()`。
+
 ## `useMap`
 
 ```ts
@@ -194,7 +224,7 @@ unbindAll();
 
 ## 错误与类型约定
 
-`MapToolsError.code`：`INVALID_ARGUMENT`、`SDK_ERROR`、`DOM_UNAVAILABLE`。
+`MapToolsError.code`：`INVALID_ARGUMENT`、`SDK_ERROR`、`SDK_UNAVAILABLE`、`DOM_UNAVAILABLE`。
 
 模块类型：
 

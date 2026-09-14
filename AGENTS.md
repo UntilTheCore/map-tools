@@ -14,7 +14,7 @@ map-tools/                            # map-tools-monorepo（private，packageMa
 ├── docs/adr/                         # 架构决策记录（0001：minemap 类型独立成包）
 ├── tsconfig.base.json
 └── packages/
-    ├── map-tools/                    # @ym/map-tools v3.0.0，插件工具库（Vite 库模式）
+    ├── map-tools/                    # @ym/map-tools v3.2.0，插件工具库（Vite 库模式）
     ├── minemap-types/                # @ym/minemap-types v0.1.0，minemap SDK 全局类型（纯 .d.ts，无构建）
     ├── skills/                       # 技能包
     └── docs-preview/                 # VitePress 1.x 文档站 + 示例实验室（private）
@@ -24,7 +24,7 @@ map-tools/                            # map-tools-monorepo（private，packageMa
 
 | 子项目                 | 包名              | 版本  | 职责                                                                                          |
 | ---------------------- | ----------------- | ----- | --------------------------------------------------------------------------------------------- |
-| packages/map-tools     | @ym/map-tools     | 3.0.0 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                                |
+| packages/map-tools     | @ym/map-tools     | 3.2.0 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                                |
 | packages/minemap-types | @ym/minemap-types | 0.1.0 | minemap SDK / minemaputil / minemap.edit 全局类型声明（唯一数据源，见 ADR 0001）              |
 | packages/skills        | map-tools-skills  | 0.1.0 | `packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）                           |
 | packages/docs-preview  | docs-preview      | 1.0.0 | VitePress 文档站 + 示例实验室（naive-ui 布局、CodeMirror 可编辑源码、runner iframe 即时运行） |
@@ -53,7 +53,7 @@ pnpm install
 
 ```bash
 pnpm build                              # 仅构建 @ym/map-tools（= pnpm --filter @ym/map-tools build）
-pnpm --filter @ym/map-tools build       # 产出 dist/（es+cjs 四入口）+ dist/umd/index.umd.js + dist/types
+pnpm --filter @ym/map-tools build       # 产出 dist/（es+cjs 多入口）+ dist/umd/index.umd.js + dist/types
 pnpm --filter docs-preview build:runner-vendor  # esbuild 预打包运行时 vendor → public/runner/vendor/
 pnpm build:all                          # map-tools build + docs-preview build（发布前全量校验）
 ```
@@ -117,25 +117,26 @@ src/
 │   ├── pointTool.ts / lineTool.ts / polygonTool.ts
 │   ├── popupTool.ts      # 弹窗核心（挂载注入模式，见 4.4）
 │   └── types.ts
-├── vue/                  # Vue 共用实现（直接依赖 vue，Vue3 语义）：useMap.ts + popup.ts（Vue3 弹窗）
-├── vue2/                 # Vue 2.7 入口：useMap 复用 ../vue/useMap + 本目录 popup.ts（new Vue 挂载）
-├── vue3/                 # Vue 3 入口：export * from "../vue"（useMap + Vue3 popup）
-├── react/                # useMap.ts（React Hook）+ popup.ts（createRoot 挂载）
+├── vue/                  # Vue 共用实现（直接依赖 vue，Vue3 语义）：useMap.ts + popup.ts（Vue3 弹窗）+ track.ts（useTrackPlayer）
+├── vue2/                 # Vue 2.7 入口：useMap/useTrackPlayer 复用 ../vue + 本目录 popup.ts（new Vue 挂载）
+├── vue3/                 # Vue 3 入口：export * from "../vue"（useMap + Vue3 popup + useTrackPlayer）
+├── react/                # useMap.ts / track.ts（React Hook）+ popup.ts（createRoot 挂载）
 └── types/minemap.d.ts    # 薄入口：import type {} from "@ym/minemap-types"（SDK 声明已迁至独立包）
 ```
 
-### 4.2 四入口与 exports 子路径
+### 4.2 多入口与 exports 子路径
 
-| 导入路径                | 说明                                                                           |
-| ----------------------- | ------------------------------------------------------------------------------ |
-| `@ym/map-tools`         | 框架无关核心（全部 core API）                                                  |
-| `@ym/map-tools/vue2`    | Vue 2.7+ 适配，导出 `createPopupDom`、`useMap`（弹窗走 new Vue 挂载）          |
-| `@ym/map-tools/vue3`    | Vue 3 适配，导出 `createPopupDom`、`useMap`（弹窗走原生 createApp）            |
-| `@ym/map-tools/react`   | React 18+ 适配，导出 `getPopupDom`、`useMap`                                   |
-| `@ym/map-tools/minemap` | 薄入口子路径，激活 `@ym/minemap-types` 的 SDK 全局声明（types-only，无运行时） |
-| `@ym/map-tools/umd`     | UMD 产物 `dist/umd/index.umd.js`，全局名 `FE_utils`                            |
+| 导入路径                | 说明                                                                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@ym/map-tools`         | 框架无关核心（全部 core API，含 Track 轨迹回放）                                                                                                |
+| `@ym/map-tools/vue2`    | Vue 2.7+ 适配，导出 `createPopupDom`、`useMap`、`useTrackPlayer`（弹窗走 new Vue 挂载）                                                         |
+| `@ym/map-tools/vue3`    | Vue 3 适配，导出 `createPopupDom`、`useMap`、`useTrackPlayer`（弹窗走原生 createApp）                                                           |
+| `@ym/map-tools/react`   | React 18+ 适配，导出 `getPopupDom`、`useMap`、`useTrackPlayer`                                                                                  |
+| `@ym/map-tools/track`   | 轨迹回放子路径（`createTrackPlayer`/`createPlaybackClock`/`createTrackFleet`）；chunk 图 **turf-free 且无框架依赖**，runner vendor 单独打包消费 |
+| `@ym/map-tools/minemap` | 薄入口子路径，激活 `@ym/minemap-types` 的 SDK 全局声明（types-only，无运行时）                                                                  |
+| `@ym/map-tools/umd`     | UMD 产物 `dist/umd/index.umd.js`，全局名 `FE_utils`                                                                                             |
 
-- `exports` 各子路径（`.` / `vue2` / `vue3` / `react`）均声明 `types` / `import` / `require` 三条件分支；`./umd` 为单字符串，直连 `dist/umd/index.umd.js`
+- `exports` 各子路径（`.` / `vue2` / `vue3` / `react` / `track` 及资源域子路径）均声明 `types` / `import` / `require` 三条件分支；`./umd` 为单字符串，直连 `dist/umd/index.umd.js`
 - `main`/`module`/`unpkg`/`jsdelivr` 字段已配置，`files` 仅发布 `dist`
 
 ### 4.3 Vue 2/3 适配机制
@@ -182,9 +183,9 @@ src/
 - VitePress 1.x；页面 `/examples-center/playground`（`layout: page` + `pageClass: playground-page`），naive-ui 布局：左侧 `NLayoutSider` 分类菜单（可收起）+ 右侧「描述区 + `NSplit`（地图 iframe | 代码编辑器）」
 - 核心组件 [.vitepress/theme/components/Playground.vue](packages/docs-preview/.vitepress/theme/components/Playground.vue)：CodeMirror 6 编辑器（`basicSetup` + `@codemirror/lang-javascript`，TS/JSX）、Sucrase 编译（TS/TSX→ESM，相对导入 `../shared/*` 改写为 `@shared/*`）、**仅手动运行**（「运行」按钮 / Ctrl+Enter；语言切换与「还原」会重置源码并运行一次）
 - 运行容器 [public/runner.html](packages/docs-preview/public/runner.html) + [public/runner/runner.js](packages/docs-preview/public/runner/runner.js)：免构建静态文件，内嵌 import map，父页 postMessage 发编译产物（`{type:"run", id, code}`），runner Blob URL `import()` 后调用 `default render(host, {})`，错误渲染浮层
-- 运行时 vendor：[scripts/build-runner-vendor.mjs](packages/docs-preview/scripts/build-runner-vendor.mjs) 用 **esbuild** 预打包 `public/runner/vendor/`（vue3/vue2/react/maptools-vue3/shared 五个 ESM 单文件；`maptools-vue3.esm.js` 为 `@ym/map-tools/vue3` 子路径入口、`external: ["vue"]` 保持裸名，供 SFC 示例直接 `import { useMap } from "@ym/map-tools/vue3"`）。**react/react-dom/client/react/jsx-runtime 合并进同一个 react.esm.js**（CJS 内部 require 无法跨 bundle external，拆分会产生浏览器不可用的 `__require`；合并后 import map 三个名指向同一文件，react 实例唯一，hooks 正常）。产物为构建产物，已 git 忽略
+- 运行时 vendor：[scripts/build-runner-vendor.mjs](packages/docs-preview/scripts/build-runner-vendor.mjs) 用 **esbuild** 预打包 `public/runner/vendor/`（vue3/vue2/react/maptools-vue3/maptools-track/maptools-react/shared 七个 ESM 单文件；`maptools-vue3.esm.js` 为 `@ym/map-tools/vue3` 子路径入口、`external: ["vue"]` 保持裸名，供 SFC 示例直接 `import { useMap } from "@ym/map-tools/vue3"`；`maptools-track.esm.js` 为 `@ym/map-tools/track` 子路径（turf-free、无框架依赖，可整体内联），`maptools-react.esm.js` 为 `@ym/map-tools/react` 子路径（external react 三件套，运行时解析到 react.esm.js 共用实例）。runner 解析链三处需同步：runner.html import map、runner.js `vendorUrlMap()`、runner.js `rewriteVendor + rewrite` 分支。**react/react-dom/client/react/jsx-runtime 合并进同一个 react.esm.js**（CJS 内部 require 无法跨 bundle external，拆分会产生浏览器不可用的 `__require`；合并后 import map 三个名指向同一文件，react 实例唯一，hooks 正常）。产物为构建产物，已 git 忽略
 - **vue3 示例为 .vue SFC 形态**（`examples/src/vue3/map-init.vue`，`<script setup>` + `useMap`，真实项目写法）：父页编译链对 SFC 先走 `vue/compiler-sfc`（`parse` + `compileScript({ inlineTemplate: true })` 动态 import 按需加载，编译为单模块 ESM 后追加 `export default __sfc__`），再照旧 Sucrase 剥 TS；`<style>` 块不被编译链支持，示例不写样式块。其余三语言仍为 `{id}.{ts,tsx}` 纯 TS
-- 示例注册表 [examples/src/registry.ts](packages/docs-preview/examples/src/registry.ts) + 分类树 [examples/src/categories.ts](packages/docs-preview/examples/src/categories.ts)：目前仅 `map-init`（地图初始化）一个示例；vue3 为 SFC，vue2/react/html 为 `map-init.{ts,tsx}`，统一导出 `render(container, options) => 清理函数`
+- 示例注册表 [examples/src/registry.ts](packages/docs-preview/examples/src/registry.ts) + 分类树 [examples/src/categories.ts](packages/docs-preview/examples/src/categories.ts)：现有 `map-init`（地图初始化）、`track-playback`（轨迹回放，四变体齐）、`track-fleet`（多车同步，vue3 + html）；vue3 为 SFC，vue2/react/html 为 `{id}.{ts,tsx}`，统一导出 `render(container, options) => 清理函数`；轨迹示例依赖 `examples/src/shared/trackData.ts`（内嵌静态轨迹数据，经 shared vendor 以 `@shared/trackData` 暴露）
 
 ## 5. 开发流程（改一处，同步多处）
 
