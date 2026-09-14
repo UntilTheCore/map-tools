@@ -36,6 +36,7 @@ export default defineConfig({
             { text: "快速开始（安装与私仓配置）", link: "/guide/getting-started" },
             { text: "最佳实践", link: "/guide/best-practices" },
             { text: "核心 API", link: "/guide/core" },
+            { text: "轨迹回放", link: "/guide/track-playback" },
             { text: "接入方式 · Vue 3", link: "/guide/vue3" },
             { text: "接入方式 · Vue 2", link: "/guide/vue2" },
             { text: "接入方式 · React", link: "/guide/react" },
@@ -56,6 +57,7 @@ export default defineConfig({
             { text: "Geometry", link: "/api/geometry" },
             { text: "Overlays", link: "/api/overlays" },
             { text: "Popup", link: "/api/popup" },
+            { text: "Track", link: "/api/track" },
             { text: "useMap", link: "/api/use-map" },
           ],
         },
@@ -63,7 +65,7 @@ export default defineConfig({
       "/examples-center/": [
         {
           text: "示例实验室",
-          items: [{ text: "地图初始化（可编辑运行）", link: "/examples-center/playground" }],
+          items: [{ text: "示例实验室（可编辑运行）", link: "/examples-center/playground" }],
         },
       ],
     },

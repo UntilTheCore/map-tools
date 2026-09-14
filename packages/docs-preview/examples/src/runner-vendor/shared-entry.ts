@@ -23,4 +23,14 @@ export {
   type ExampleRender,
   type RenderOptions,
 } from "../shared/demo";
+export {
+  TRACK_A,
+  TRACK_B,
+  TRACK_C,
+  BUS_ICON,
+  BUS_ICON_BLUE,
+  BUS_ICON_GREEN,
+  START_ICON,
+  END_ICON,
+} from "../shared/trackData";
 import "../shared/demo.css";

@@ -3,8 +3,9 @@
  *
  * 用途：playground 编辑后的示例代码在 /runner.html 中经 import map 解析
  * `vue` / `vue2` / `react` / `react-dom/client` / `react/jsx-runtime` /
- * `react/jsx-dev-runtime` /
- * `@shared/loadMinemap` / `@shared/demo`，不依赖外网。
+ * `react/jsx-dev-runtime` / `@ym/map-tools/vue3` / `@ym/map-tools/track` /
+ * `@ym/map-tools/react` /
+ * `@shared/loadMinemap` / `@shared/demo` / `@shared/trackData`，不依赖外网。
  *
  * 为何用 esbuild 而非 vite（rolldown）：
  * react/vue2 等包的入口是 CJS。rolldown 对 CJS 入口只产出
@@ -175,6 +176,47 @@ async function writeWrapper(name, source) {
     ),
     outName: "maptools-vue3.esm.js",
     external: ["vue"],
+  });
+}
+
+/* ---------- 4b. map-tools track 子路径(轨迹回放;纯 core,无框架依赖) ----------
+ * dist/track.js 的 chunk 图只含 errors/ids/lifecycle/player/fleet,不引 vue/react/turf,
+ * 可整体内联打包为单文件。playground html/vue2/fleet 示例直接 import { createTrackPlayer, ... } from "@ym/map-tools/track"。
+ */
+{
+  const trackEntry = require
+    .resolve("@ym/map-tools/package.json")
+    .replace(/package\.json$/, "dist/track.js");
+  await esbuildBundle({
+    stdinFile: await writeWrapper(
+      "maptools-track-wrapper.mjs",
+      `import * as M from "${trackEntry.replace(/\\/g, "/")}";\nexport * from "${trackEntry.replace(/\\/g, "/")}";\nexport default M;\n`,
+    ),
+    outName: "maptools-track.esm.js",
+  });
+}
+
+/* ---------- 4c. map-tools react 适配层(useMap/useTrackPlayer 等) ----------
+ * react / react-dom/client / react/jsx-runtime 保持裸名 external,运行时由
+ * runner 的 rewriteVendor 别名解析到 react.esm.js(react 实例唯一)。
+ */
+{
+  const reactEntry = require
+    .resolve("@ym/map-tools/package.json")
+    .replace(/package\.json$/, "dist/react.js");
+  await esbuildBundle({
+    stdinFile: await writeWrapper(
+      "maptools-react-wrapper.mjs",
+      `import * as M from "${reactEntry.replace(/\\/g, "/")}";\nexport * from "${reactEntry.replace(/\\/g, "/")}";\nexport default M;\n`,
+    ),
+    outName: "maptools-react.esm.js",
+    external: [
+      "react",
+      "react-dom",
+      "react-dom/client",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+    ],
   });
 }
 

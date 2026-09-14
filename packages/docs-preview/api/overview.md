@@ -11,11 +11,12 @@
 | 几何        | `@ym/map-tools/geometry`                                          | 坐标断言、方位角、要素过滤、线端点、面顶点、业务交点                                                                               |
 | 覆盖物      | `@ym/map-tools/overlays`                                          | `removeOverlays`                                                                                                                   |
 | Popup       | `@ym/map-tools/popup`                                             | `createPopupDom`、`PopupDomHandle`                                                                                                 |
+| 轨迹回放    | `@ym/map-tools/track`                                             | `createTrackPlayer`、`createPlaybackClock`、`createTrackFleet`                                                                     |
 | 事件        | `@ym/map-tools/events`                                            | `createMapEventController`、统一 `on` / `off` 事件类型                                                                             |
-| 框架适配    | `@ym/map-tools/vue2`、`@ym/map-tools/vue3`、`@ym/map-tools/react` | `useMap`、框架版 `createPopupDom`                                                                                                  |
+| 框架适配    | `@ym/map-tools/vue2`、`@ym/map-tools/vue3`、`@ym/map-tools/react` | `useMap`、`useTrackPlayer`、框架版 `createPopupDom`                                                                                |
 | Script 类型 | `@ym/map-tools/minemap`、`@ym/map-tools/umd`                      | `minemap` 与 `FE_utils` 显式全局声明                                                                                               |
 
-所有参数校验失败都会抛出 `MapToolsError`，其 `code` 为 `INVALID_ARGUMENT`、`SDK_ERROR` 或 `DOM_UNAVAILABLE`。查询无命中返回空数组；删除不存在的资源会忽略。
+所有参数校验失败都会抛出 `MapToolsError`，其 `code` 为 `INVALID_ARGUMENT`、`SDK_ERROR`、`SDK_UNAVAILABLE` 或 `DOM_UNAVAILABLE`。查询无命中返回空数组；删除不存在的资源会忽略。
 
 ## 类型入口
 

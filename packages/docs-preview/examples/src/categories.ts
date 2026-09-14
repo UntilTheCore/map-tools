@@ -19,6 +19,11 @@ export const exampleCategories: ExampleCategory[] = [
     title: "地图",
     examples: ["map-init"],
   },
+  {
+    id: "track",
+    title: "轨迹回放",
+    examples: ["track-playback", "track-fleet"],
+  },
 ];
 
 export interface CategorizedExample {

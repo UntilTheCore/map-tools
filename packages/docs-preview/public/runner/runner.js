@@ -17,7 +17,7 @@
   function cleanup() { callDispose(); host.innerHTML = ""; host.style.cssText = ""; }
   function releaseBlobs() { Object.keys(vendorBlobs).forEach(function (name) { URL.revokeObjectURL(vendorBlobs[name]); }); vendorBlobs = Object.create(null); vendorBlobPromises = Object.create(null); }
   function rewrite(text, aliases) { Object.keys(aliases).forEach(function (name) { var escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); text = text.replace(new RegExp("(from\\s*|import\\s*\\(\\s*)(['\"])(" + escaped + ")(['\"])" , "g"), "$1$2" + aliases[name] + "$4"); }); return text; }
-  function vendorUrlMap() { var base = location.href.replace(/\/runner\.html.*$/, ""); return { vue: base + "/runner/vendor/vue3.esm.js", vue2: base + "/runner/vendor/vue2.esm.js", react: base + "/runner/vendor/react.esm.js", "react-dom/client": base + "/runner/vendor/react.esm.js", "react/jsx-runtime": base + "/runner/vendor/react.esm.js", "react/jsx-dev-runtime": base + "/runner/vendor/react.esm.js", "@ym/map-tools/vue3": base + "/runner/vendor/maptools-vue3.esm.js", "@shared/loadMinemap": base + "/runner/vendor/shared.esm.js", "@shared/demo": base + "/runner/vendor/shared.esm.js" }; }
+  function vendorUrlMap() { var base = location.href.replace(/\/runner\.html.*$/, ""); return { vue: base + "/runner/vendor/vue3.esm.js", vue2: base + "/runner/vendor/vue2.esm.js", react: base + "/runner/vendor/react.esm.js", "react-dom/client": base + "/runner/vendor/react.esm.js", "react/jsx-runtime": base + "/runner/vendor/react.esm.js", "react/jsx-dev-runtime": base + "/runner/vendor/react.esm.js", "@ym/map-tools/vue3": base + "/runner/vendor/maptools-vue3.esm.js", "@ym/map-tools/track": base + "/runner/vendor/maptools-track.esm.js", "@ym/map-tools/react": base + "/runner/vendor/maptools-react.esm.js", "@shared/loadMinemap": base + "/runner/vendor/shared.esm.js", "@shared/demo": base + "/runner/vendor/shared.esm.js", "@shared/trackData": base + "/runner/vendor/shared.esm.js" }; }
   function rewriteVendor(name, url, aliases) { if (vendorBlobs[name]) return Promise.resolve(vendorBlobs[name]); if (vendorBlobPromises[name]) return vendorBlobPromises[name]; vendorBlobPromises[name] = fetch(url).then(function (res) { if (!res.ok) throw new Error("vendor 加载失败: " + res.status); return res.text(); }).then(function (text) { var blobUrl = URL.createObjectURL(new Blob([rewrite(text, aliases)], { type: "text/javascript" })); vendorBlobs[name] = blobUrl; return blobUrl; }).catch(function (error) { delete vendorBlobPromises[name]; throw error; }); return vendorBlobPromises[name]; }
   function fail(runId, code, error) { if (runId !== currentRunId || disposed) return; var message = error instanceof Error ? error.message : String(error); showError(message); reply({ type: "failed", runId: runId, error: { code: code, message: message, stack: error && error.stack } }); }
   function run(message) {
@@ -25,10 +25,14 @@
     currentRunId = message.runId; cleanup(); hideError(); reply({ type: "started", runId: currentRunId });
     var urls = vendorUrlMap();
     var aliases = { vue: urls.vue, vue2: urls.vue2, react: urls.react, "react-dom/client": urls["react-dom/client"], "react/jsx-runtime": urls["react/jsx-runtime"], "react/jsx-dev-runtime": urls["react/jsx-dev-runtime"] };
-    var code = rewrite(message.code, { vue: urls.vue, vue2: urls.vue2, react: urls.react, "react-dom/client": urls["react-dom/client"], "react/jsx-runtime": urls["react/jsx-runtime"], "react/jsx-dev-runtime": urls["react/jsx-dev-runtime"], "@shared/loadMinemap": urls["@shared/loadMinemap"], "@shared/demo": urls["@shared/demo"] });
-    rewriteVendor("maptools-vue3", urls["@ym/map-tools/vue3"], aliases).catch(function () { return urls["@ym/map-tools/vue3"]; }).then(function (maptoolsUrl) {
+    var code = rewrite(message.code, { vue: urls.vue, vue2: urls.vue2, react: urls.react, "react-dom/client": urls["react-dom/client"], "react/jsx-runtime": urls["react/jsx-runtime"], "react/jsx-dev-runtime": urls["react/jsx-dev-runtime"], "@shared/loadMinemap": urls["@shared/loadMinemap"], "@shared/demo": urls["@shared/demo"], "@shared/trackData": urls["@shared/trackData"] });
+    Promise.all([
+      rewriteVendor("maptools-vue3", urls["@ym/map-tools/vue3"], aliases).catch(function () { return urls["@ym/map-tools/vue3"]; }),
+      rewriteVendor("maptools-track", urls["@ym/map-tools/track"], aliases).catch(function () { return urls["@ym/map-tools/track"]; }),
+      rewriteVendor("maptools-react", urls["@ym/map-tools/react"], aliases).catch(function () { return urls["@ym/map-tools/react"]; }),
+    ]).then(function (maptoolsUrls) {
       if (disposed || message.runId !== currentRunId) return;
-      code = rewrite(code, { "@ym/map-tools/vue3": maptoolsUrl });
+      code = rewrite(code, { "@ym/map-tools/vue3": maptoolsUrls[0], "@ym/map-tools/track": maptoolsUrls[1], "@ym/map-tools/react": maptoolsUrls[2] });
       var moduleUrl = URL.createObjectURL(new Blob([code], { type: "text/javascript" }));
       import(moduleUrl).then(function (mod) {
         URL.revokeObjectURL(moduleUrl);
