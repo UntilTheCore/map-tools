@@ -1,6 +1,6 @@
 {
   "name": "@ym/map-tools",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "author": "ly",
   "license": "MIT",
   "type": "module",
@@ -73,6 +73,11 @@
       "types": "./dist/types/events.d.ts",
       "import": "./dist/events.js",
       "require": "./dist/events.cjs"
+    },
+    "./track": {
+      "types": "./dist/types/track.d.ts",
+      "import": "./dist/track.js",
+      "require": "./dist/track.cjs"
     },
     "./minemap": {
       "types": "./dist/types/minemap.d.ts"

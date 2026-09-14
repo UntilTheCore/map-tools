@@ -1,4 +1,5 @@
-export type MapToolsErrorCode = "INVALID_ARGUMENT" | "SDK_ERROR" | "DOM_UNAVAILABLE";
+export type MapToolsErrorCode =
+  "INVALID_ARGUMENT" | "SDK_ERROR" | "SDK_UNAVAILABLE" | "DOM_UNAVAILABLE";
 
 export class MapToolsError extends Error {
   readonly code: MapToolsErrorCode;

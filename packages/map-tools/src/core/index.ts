@@ -25,3 +25,4 @@ export {
 export type { FeatureGeometryType } from "./geometry";
 export * from "./overlays/lifecycle";
 export * from "./popup/dom";
+export * from "./track";

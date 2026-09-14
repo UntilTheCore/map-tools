@@ -19,6 +19,7 @@
       "@ym/map-tools/geometry": ["../dist/types/geometry.d.ts"],
       "@ym/map-tools/overlays": ["../dist/types/overlays.d.ts"],
       "@ym/map-tools/popup": ["../dist/types/popup.d.ts"],
+      "@ym/map-tools/track": ["../dist/types/track.d.ts"],
       "@ym/map-tools/minemap": ["../dist/types/minemap.d.ts"],
       "@ym/map-tools/umd": ["../dist/types/umd.d.ts"],
       "@ym/minemap-types": ["../../minemap-types/index.d.ts"]
@@ -32,6 +33,7 @@
     "source-narrowing.ts",
     "layer-types.ts",
     "geometry-types.ts",
+    "track-types.ts",
     "vue-consumer.ts",
     "react-consumer.ts"
   ]

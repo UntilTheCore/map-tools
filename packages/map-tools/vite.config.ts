@@ -81,6 +81,7 @@ export default defineConfig({
         overlays: "src/overlays.ts",
         popup: "src/popup.ts",
         events: "src/events.ts",
+        track: "src/track.ts",
       },
       formats: ["es", "cjs"],
       fileName: (format, entryName) => (format === "es" ? `${entryName}.js` : `${entryName}.cjs`),
