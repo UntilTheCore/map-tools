@@ -7,8 +7,10 @@
 ```
 
 ```bash
-pnpm add @ym/map-tools
+pnpm add @ym/map-tools @turf/turf
 ```
+
+`@turf/turf` 是本库的运行时依赖，同时也**建议作为业务项目的直接依赖**安装：GeoJSON 数据一律用它的辅助函数构造（见下文），类型也由它同源的 `geojson` 包提供。
 
 ## 前置 minemap SDK
 
@@ -29,11 +31,14 @@ SDK 加载前 `window.minemap` 是可选值。TypeScript 项目通过显式类�
 
 ## 第一个 GeoJSON 图层
 
+GeoJSON 数据用 `@turf/turf` 的辅助函数构造，不要手写 `{ type: "FeatureCollection", features: [] }` 这类字面量——`point` / `polygon` / `featureCollection` 对类型字段和参数顺序都有约束，写错直接编译报错：
+
 ```ts
 import { createLayerId, createSourceId, ensureLayers, upsertGeoJSONSource } from "@ym/map-tools";
+import { featureCollection, point } from "@turf/turf";
 
-const sourceId = createSourceId("demo", "district");
-const layerId = createLayerId("demo", "district");
+const sourceId = createSourceId("demo", "poi");
+const layerId = createLayerId("demo", "poi");
 
 const map = new minemap.Map({
   container: "map",
@@ -46,20 +51,32 @@ const map = new minemap.Map({
 map.on("load", () => {
   upsertGeoJSONSource(map, {
     id: sourceId,
-    data: {
-      type: "FeatureCollection",
-      features: [],
-    },
+    data: featureCollection([
+      point([106.5516, 29.563], { name: "解放碑" }),
+      point([106.5775, 29.5621], { name: "洪崖洞" }),
+    ]),
   });
   ensureLayers(map, [
     {
       id: layerId,
-      type: "fill",
+      type: "circle",
       source: sourceId,
-      paint: { "fill-color": "#4de08b", "fill-opacity": 0.35 },
+      paint: { "circle-color": "#4de08b", "circle-radius": 6 },
     },
   ]);
 });
 ```
+
+数据为空时同样用 turf 构造空集合，而不是写字面量。注意**空数组要显式标注类型**：`featureCollection([])` 会把泛型推成 turf 自己的 `Properties`，与 `@ym/map-tools` 期望的 `GeoJSON` 不兼容，不标注会编译报错：
+
+```ts
+import { featureCollection } from "@turf/turf";
+import type { FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+
+const emptyFC = (): FeatureCollection<Geometry, GeoJsonProperties> => featureCollection([]);
+upsertGeoJSONSource(map, { id: sourceId, data: emptyFC() });
+```
+
+数据层的类型化约定（`Feature` / `FeatureCollection` 泛型、入口适配器）见[最佳实践](/guide/best-practices)。
 
 接入方式见 [核心 API](/guide/core)、[Vue 3](/guide/vue3)、[Vue 2](/guide/vue2)、[React](/guide/react) 和 [原生 HTML](/guide/html)。
