@@ -15,19 +15,19 @@ map-tools/                            # map-tools-monorepo（private，packageMa
 ├── tsconfig.base.json
 └── packages/
     ├── map-tools/                    # @ym/map-tools v3.2.0，插件工具库（Vite 库模式）
-    ├── minemap-types/                # @ym/minemap-types v0.1.0，minemap SDK 全局类型（纯 .d.ts，无构建）
-    ├── skills/                       # 技能包
+    ├── minemap-types/                # @ym/minemap-types v0.1.0，minemap SDK 全局类型 + Web 服务 API 类型（纯 .d.ts，无构建）
+    ├── skills/                       # 技能包（含 minemap-jsapi-skill 技能族：2d-api / 2d-util / edit / lbs / service）
     └── docs-preview/                 # VitePress 1.x 文档站 + 示例实验室（private）
 ```
 
 > 注：根级 `src/`、`lib/` 为历史同步产物，已删除（不再存在）；源码只认 `packages/` 下的文件。
 
-| 子项目                 | 包名              | 版本  | 职责                                                                                          |
-| ---------------------- | ----------------- | ----- | --------------------------------------------------------------------------------------------- |
-| packages/map-tools     | @ym/map-tools     | 3.2.0 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                                |
-| packages/minemap-types | @ym/minemap-types | 0.1.0 | minemap SDK / minemaputil / minemap.edit 全局类型声明（唯一数据源，见 ADR 0001）              |
-| packages/skills        | map-tools-skills  | 0.1.0 | `packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）                           |
-| packages/docs-preview  | docs-preview      | 1.0.0 | VitePress 文档站 + 示例实验室（naive-ui 布局、CodeMirror 可编辑源码、runner iframe 即时运行） |
+| 子项目                 | 包名              | 版本  | 职责                                                                                                          |
+| ---------------------- | ----------------- | ----- | ------------------------------------------------------------------------------------------------------------- |
+| packages/map-tools     | @ym/map-tools     | 3.2.0 | 核心地图工具库，作者 ly，发布至 Verdaccio 私仓                                                                |
+| packages/minemap-types | @ym/minemap-types | 0.1.0 | minemap SDK / minemaputil / minemap.edit 全局类型声明 + Web 服务 API 类型（`/service` 子路径）（见 ADR 0001） |
+| packages/skills        | map-tools-skills  | 0.1.0 | `packages/skills/map-tools/SKILL.md`（frontmatter name: map-tools）                                           |
+| packages/docs-preview  | docs-preview      | 1.0.0 | VitePress 文档站 + 示例实验室（naive-ui 布局、CodeMirror 可编辑源码、runner iframe 即时运行）                 |
 
 ## 2. 环境要求
 
@@ -176,6 +176,7 @@ src/
   - JS 主 CDN（实测 200）：`https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.js`
   - CSS：`https://gmap.cqphx.cn:4443/minemapapi/v2.1.0/minemap.css`
 - SDK 类型由独立包 **@ym/minemap-types** 提供（`packages/minemap-types/index.d.ts`，自包含单文件，禁止反向引用 `@ym/map-tools`）：`namespace minemap`（Map/Popup/Marker/LngLat/控件/事件等）+ `minemaputil` + `minemap.edit` + `minemap.lbsUtil`；map-tools 的 `src/types/minemap.d.ts` 仅为薄入口（`import type {} from "@ym/minemap-types"`），`@ym/map-tools/minemap` 子路径与 `/// <reference types="@ym/map-tools/minemap" />` 均经此链激活（实测：reference types 指令支持带 scope 的包解析，非仅限 `node_modules/@types/`）
+- 同包另提供 **`service.d.ts`**（天镜平台 Web 服务 API 类型，经 `exports["./service"]` 子路径导出）：与 `index.d.ts` 相反，它是**普通 ES 模块**（`export interface/type`），不做全局声明、不产生副作用，消费者按需 `import type { DrivingRequest } from "@ym/minemap-types/service"`。覆盖数据服务/位置服务/功能服务三大类共 40 个 HTTP 接口；`@ym/map-tools` **不**转发该子路径（需要时直接从类型包引入）。冒烟测试在 `test/service-consumer.ts`，随 `pnpm --filter @ym/minemap-types typecheck` 一起跑
 - docs-preview 示例实验室使用 [examples/src/shared/loadMinemap.ts](packages/docs-preview/examples/src/shared/loadMinemap.ts) 动态加载器（私有部署单源加载、promise 化；**key 由系统统一提供**：`SYSTEM_MINEMAP_KEY` 常量占位于该文件顶部，为空时 `createMinemapMap` 快速失败）。示例默认参数：solution `222609`、center `[106.55, 29.56]`（重庆）、私有 MapStyleServer styleJSON（key 内嵌于 URL）。逐图层样式错误（白名单 `TOLERATED_STYLE_ERRORS`，当前含 `gis_geo_motorway` 缺失）不判为初始化失败——SDK 仅跳过坏图层、不中断渲染；属服务端 styleJSON 与矢量数据不同步的临时容忍，修复后可移除
 
 ### 4.8 docs-preview 示例实验室（playground）
@@ -204,6 +205,8 @@ src/
    ```
 6. **发布**：见第 6 节
 
+> 改动 `packages/minemap-types` 时另走一条链路：改 `index.d.ts`（全局 SDK 声明）或 `service.d.ts`（Web 服务 API 类型）→ 在 `test/consumer.ts` / `test/service-consumer.ts` 补冒烟用例 → `pnpm --filter @ym/minemap-types typecheck` → 若影响接口文档，同步 `packages/skills/minemap-jsapi-skill/minemap-service/references/` 对应页面。
+
 ## 6. 发布流程
 
 1. 确认改动已通过第 5 节全部构建校验
@@ -221,7 +224,8 @@ src/
 
 - **禁改 UMD 全局名 `FE_utils`**（[vite.umd.config.ts](packages/map-tools/vite.umd.config.ts) 中 `lib.name`）；docs-preview、技能文档与下游用户均依赖该全局名
 - **禁止在库源码（packages/map-tools/src）使用 .vue SFC**：一律使用渲染函数（h / render）/ createElement
-- **minemap 全局类型必须保持全局命名空间声明形态**（`namespace minemap` + `declare global`，位于 `packages/minemap-types`），勿改为模块导出，否则消费者类型解析失效；类型包**禁止反向依赖** `@ym/map-tools`（依赖方向单向，见 ADR 0001）；修改 SDK 全局类型只改 `packages/minemap-types/index.d.ts`，勿在 map-tools 源码树内加声明
+- **minemap 全局类型必须保持全局命名空间声明形态**（`namespace minemap` + `declare global`，位于 `packages/minemap-types/index.d.ts`），勿改为模块导出，否则消费者类型解析失效；类型包**禁止反向依赖** `@ym/map-tools`（依赖方向单向，见 ADR 0001）；修改 SDK 全局类型只改 `packages/minemap-types/index.d.ts`，勿在 map-tools 源码树内加声明
+- **`index.d.ts` 与 `service.d.ts` 形态不可互换**：前者是全局 ambient 声明（`declare global` + `export {}`），后者是普通 ES 模块（`export interface/type`，末尾同样 `export {}` 仅为保持模块语义）。服务端 HTTP 接口类型一律进 `service.d.ts` 并经 `exports["./service"]` 暴露，**不要**塞进全局 `minemap` 命名空间（会与前端 LBS 插件的 `minemap.service` 语义撞车）；新增接口时同步更新 `packages/skills/minemap-jsapi-skill/minemap-service/` 对应 reference 与 `test/service-consumer.ts`
 - **双构建配置勿合并**：vue2 demos 需要独立 alias（`vue` → Vue 2.7 运行时绝对路径），主 demos 走 Vue 3；合并单配置会让 `vue` 无法同时解析到两个版本
 - **勿删 `pnpm-workspace.yaml` 的 `allowBuilds`**（esbuild 依赖构建脚本权限）
 - **external 边界**：`@turf/turf` 必须内联；`vue`/`react`/`react-dom` 必须 external（Vue 适配层直接依赖消费者提供的 `vue`，vue2 走 2.7、vue3 走 3）
