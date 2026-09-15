@@ -2,11 +2,11 @@
 
 ## 接口介绍
 
-| 项       | 值                                                         |
-| -------- | ---------------------------------------------------------- |
-| 接口地址 | http(s)://ip:port/tianjing-server/lbs-api/route/v2/transit |
-| 请求方式 | GET、POST                                                  |
-| 服务描述 | 可根据起终点坐标检索符合条件的公共交通路线规划方案。       |
+| 项       | 值                                                                 |
+| -------- | ------------------------------------------------------------------ |
+| 接口地址 | http(s)://ip:port/tianjing-server/lbs-api/route/v2/special/transit |
+| 请求方式 | GET、POST                                                          |
+| 服务描述 | 可根据起终点坐标检索符合条件的公共交通路线规划方案。               |
 
 ## 参数说明
 
@@ -53,4 +53,10 @@
 
 ## 注意事项与已知文档问题
 
-- 文档未提供「请求样例」与「接口返回示例」，返回结构需以实际调用为准。
+- 文档未提供「请求样例」与「接口返回示例」，返回结构以实际调用为准（下同）。
+- **接口地址含 `special` 段**：正确地址是 `.../lbs-api/route/v2/special/transit`，**不是** `.../route/v2/transit`。后者同样被服务端注册（不带参会返回 `Required request parameter 'origin' ... is not present`），但**执行算路时一律返回 `{"msg":null,"code":500}`**，容易误判为服务故障。私有部署实测：`special/transit` 正常返回 `code:0`。
+- **公交返回的是通用路线结构**：实测 `special/transit` 的 `result.routes[]` 字段与驾车/步行/骑行完全一致（`strategy`/`distance`/`duration`/`tolls`/`tollDistance`/`trafficLights`/`restriction`/`routeLine`/`steps`），**未出现线路、站点、换乘等公交专属字段**。若需要换乘信息，需以实际服务端能力为准。
+- `alternatives=1` 实测可返回 3 条路线（`result.count: 3`）。
+- `result.routes[].steps[].action` / `assistantAction` 文档标注为整数编号，**实测返回中文字符串**（如 `"继续行进"`），按字符串处理并做好兜底。
+- 失败时 `msg` 可能为 `null`，用 `code` 判断成功与否，不要依赖 `msg` 分支。
+- 起终点落在导航数据范围外时返回 `路径规划失败:规划点坐标超出导航道路数据范围!`（`code:500`、`status:100`）；实测导航数据覆盖重庆主城。

@@ -79,3 +79,4 @@ http://ip:port/tianjing-server/lbs-api/geocoding/geo?key=552280e3-8cbd-49a1-9d2a
 
 - 文档称转换为“高德经纬度坐标”，即 GCJ02；若下游用 WGS84 需自行做坐标纠偏。
 - `city` 支持中文名/全拼/citycode/adcode，不支持县级市；查询内容为空时退化为全国范围检索。
+- **私有部署实测：召回质量不稳定**。`gmap.cqphx.cn:4443` 上部分地址直接返回 `code:500` + `解析地址失败!`（如「重庆市渝中区解放碑」「观音桥」「重庆北站」）；部分地址返回 `code:0` 但结果与输入无关（输入北京地址返回重庆点位），`confidence` 仅约 0.41。**不要把 `code === 0` 当作结果正确**，应结合 `confidence` / `similarity` / `formatted_address` 校验，必要时用 `city` 限定范围。逆地理编码（regeo）实测正常。

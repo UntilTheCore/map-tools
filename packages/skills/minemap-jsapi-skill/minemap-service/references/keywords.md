@@ -109,3 +109,8 @@ http://ip:port/tianjing-server/lbs-api/integrated/v2/keywords?key=552280e3-8cbd-
 - `limitRegion` 默认值拼写为 `falase`（应为 `false`）
 - 文字笔误「多个类型剑用」（应为「间用」）
 - `keywords` 与 `types` 至少填一项。
+- **返回是混合类型**：`features[].feature_type` 实测有 `road` / `road-new`（道路）、`poi` / `poi-new`（兴趣点）、`aoi-new`（区域）。**按路名查道路时须筛 `feature_type.startsWith("road")`**；同名道路会返回多条（分段），画完整道路需合并几何。道路的 `geometry` 是 WKT `LINESTRING`，POI 是 `POINT`，同一字段两种几何类型。
+- **`region` 决定检索范围**。私有部署实测：同一 `keywords=万达`，`region=重庆市` 返回 `hits:9986`，`region=北京市` / `浙江省` 返回 `hits:0`，不传时结果也集中在重庆——当前部署的检索数据限定在重庆。
+- **搜完整路名才稳定命中道路**。实测 `中山三路` / `长江一路` / `解放路` / `龙溪路` 返回 `road*`；泛词（如 `路`）返回的几乎全是 POI / AOI。
+- **中文参数必须 UTF-8 编码**。用 GBK 编码请求会静默返回 `hits:0`（无报错），排查时优先确认编码。
+- 返回字段比文档表格更丰富：实测还有 `features[].uuid`、`.weight`、`.level`、`.similarity`、`.type`（道路等级，如 `城市二级道路` / `省道`）。
