@@ -21,6 +21,7 @@ export default defineConfig({
     nav: [
       { text: "首页", link: "/" },
       { text: "指南", link: "/guide/getting-started" },
+      { text: "案例参考", link: "/cases/", activeMatch: "^/cases/" },
       { text: "API 参考", link: "/api/overview" },
       {
         text: "示例实验室",
@@ -36,12 +37,23 @@ export default defineConfig({
             { text: "快速开始（安装与私仓配置）", link: "/guide/getting-started" },
             { text: "最佳实践", link: "/guide/best-practices" },
             { text: "核心 API", link: "/guide/core" },
-            { text: "轨迹回放", link: "/guide/track-playback" },
             { text: "接入方式 · Vue 3", link: "/guide/vue3" },
             { text: "接入方式 · Vue 2", link: "/guide/vue2" },
             { text: "接入方式 · React", link: "/guide/react" },
             { text: "接入方式 · 原生 HTML（UMD）", link: "/guide/html" },
             { text: "v2 → v3 迁移指南", link: "/guide/migration" },
+          ],
+        },
+      ],
+      "/cases/": [
+        {
+          text: "案例参考",
+          items: [
+            { text: "案例总览", link: "/cases/" },
+            { text: "轨迹回放", link: "/cases/track-playback" },
+            { text: "地址解析与逆地址解析", link: "/cases/geocoding" },
+            { text: "道路搜索", link: "/cases/road-search" },
+            { text: "公交路径规划", link: "/cases/transit-route" },
           ],
         },
       ],

@@ -1,6 +1,6 @@
 # Track
 
-轨迹回放 API（v3.2.0 新增）。入口：主入口 `@ym/map-tools`、子路径 `@ym/map-tools/track`、UMD 全局 `FE_utils`。概念与场景化说明见[指南 · 轨迹回放](/guide/track-playback)。
+轨迹回放 API（v3.2.0 新增）。入口：主入口 `@ym/map-tools`、子路径 `@ym/map-tools/track`、UMD 全局 `FE_utils`。概念与场景化说明见[案例参考 · 轨迹回放](/cases/track-playback)。
 
 ## createTrackPlayer
 
@@ -117,7 +117,7 @@ interface TrackFleetHandle {
 - 终点：条件 A（elapsed ≥ 轴总长）→ `clock.pause()` + `arrive { fraction: 1 }`；条件 B（全员边沿冻结且轴未走完）→ `clock.pause()`、无 arrive、进度停实际 fraction。
 - `play()` 三态：`ended` 后调用 = seek 0 + 全员重播（解除含手动 pause 的全部冻结）；`autoFrozen` 后调用 = 仅恢复时钟（冻结成员保持冻结）；`seekFraction/seekTime` 清除终态标志，stopped 后从回看点继续而非全量重播。
 - `stop()`：全员回起点 + 时钟归零 + 标志复位。
-- 轴规则见[指南](/guide/track-playback)「多车同步」；realtime add/remove 后并集重算（显式 `timeRange` 锁定），uniform 首个 add 定格快照。
+- 轴规则见[案例参考](/cases/track-playback)「多车同步」；realtime add/remove 后并集重算（显式 `timeRange` 锁定），uniform 首个 add 定格快照。
 - `progress/arrive` 的 `fraction` 是**全局轴**归一化，与成员各自 `TrackProgress.fraction` 双轨、数值不同属设计使然。
 
 ## useTrackPlayer（框架适配）
