@@ -773,7 +773,7 @@ export interface BicyclingRequest extends ServiceBaseRequest {
   alternatives?: 0 | 1;
 }
 
-/** Request of the transit route endpoint (`route/v2/transit`). */
+/** Request of the transit route endpoint (`route/v2/special/transit`). */
 export interface TransitRequest extends ServiceBaseRequest {
   origin: CoordinateString;
   destination: CoordinateString;
@@ -1156,7 +1156,7 @@ export type LbsOperation =
   | "route/v2/driving"
   | "route/v2/walking"
   | "route/v2/bicycling"
-  | "route/v2/transit";
+  | "route/v2/special/transit";
 
 /** Endpoint name union for the 数据服务 map data operations. */
 export type MapDataOperation =
