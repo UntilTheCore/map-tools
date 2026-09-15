@@ -188,6 +188,14 @@ src/
 - **vue3 示例为 .vue SFC 形态**（`examples/src/vue3/map-init.vue`，`<script setup>` + `useMap`，真实项目写法）：父页编译链对 SFC 先走 `vue/compiler-sfc`（`parse` + `compileScript({ inlineTemplate: true })` 动态 import 按需加载，编译为单模块 ESM 后追加 `export default __sfc__`），再照旧 Sucrase 剥 TS；`<style>` 块不被编译链支持，示例不写样式块。其余三语言仍为 `{id}.{ts,tsx}` 纯 TS
 - 示例注册表 [examples/src/registry.ts](packages/docs-preview/examples/src/registry.ts) + 分类树 [examples/src/categories.ts](packages/docs-preview/examples/src/categories.ts)：现有 `map-init`（地图初始化）、`track-playback`（轨迹回放，四变体齐）、`track-fleet`（多车同步，vue3 + html）；vue3 为 SFC，vue2/react/html 为 `{id}.{ts,tsx}`，统一导出 `render(container, options) => 清理函数`；轨迹示例依赖 `examples/src/shared/trackData.ts`（内嵌静态轨迹数据，经 shared vendor 以 `@shared/trackData` 暴露）
 
+### 4.9 docs-preview 文档内容分区
+
+- 导航（[.vitepress/config.ts](packages/docs-preview/.vitepress/config.ts) 的 `nav`）分四区：**指南** `/guide/`、**案例参考** `/cases/`、**API 参考** `/api/`、**示例实验室** `/examples-center/`；`sidebar` 按路径前缀分键，新增页面须同时挂入对应 `items`
+- **指南**（`guide/`）：讲能力怎么用（快速开始、最佳实践、核心 API、各框架接入、迁移）
+- **案例参考**（`cases/`）：讲**具体业务场景端到端怎么做**，每个案例含可复制调用代码、返回数据关键字段解析、配套 skill 使用方式与提示词范例。现有 `track-playback`（轨迹回放，从 `guide/` 迁入）、`geocoding`（地址解析 + 逆地址解析）、`road-search`（道路搜索，`lbs-api/integrated/v2/keywords`，限定 `region=重庆市`）、`transit-route`（公交路径规划）；后三者为天镜 Web 服务 API（服务端 HTTP），接口地址以私有部署 `https://gmap.cqphx.cn:4443` 为实际调用地址
+- 页面约定：无 frontmatter、以 `# 标题` 开头；跨页链接用根绝对路径（如 `/cases/geocoding`）。**迁移页面时须同步全仓入链**（如 `api/track.md` 指向 `/cases/track-playback`）
+- 案例页中的接口实测结论应在页内「注意事项」如实标注，并说明是否已实测；实测发现同时回写到对应的 `packages/skills/minemap-jsapi-skill/minemap-service/references/*.md`，保持文档站与技能口径一致
+
 ## 5. 开发流程（改一处，同步多处）
 
 修改 core 后按以下链路逐层同步：
