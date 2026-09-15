@@ -8,10 +8,12 @@
   "types": "./index.d.ts",
   "exports": {
     ".": "./index.d.ts",
+    "./service": "./service.d.ts",
     "./package.json": "./package.json"
   },
   "files": [
     "index.d.ts",
+    "service.d.ts",
     "README.md"
   ],
   "peerDependencies": {
